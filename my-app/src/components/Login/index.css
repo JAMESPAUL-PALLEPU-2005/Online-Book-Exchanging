@@ -1,0 +1,192 @@
+/* Existing styles for other components */
+.a-bg-container {
+    min-height: 100vh;
+    margin: 0px;
+    background-image: url('https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimages2.alphacoders.com%2F261%2F26102.jpg&f=1&nofb=1&ipt=65ca0e7beb90c2c0e875f76f3518eff14d1cab876ee04293482bcbf99731492b&ipo=images');
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.auth-head {
+    position: relative;
+    top: 60px;
+    color: white;
+}
+
+.home-container {
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-self: center;
+}
+
+.added-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.added-text {
+    font-size: 2.2rem;
+    color: #09e23b;
+}
+
+.operation-area {
+    width: 80%;
+    display: flex;
+    flex-direction: row;
+    margin-left: auto;
+}
+
+.btn {
+    border: none;
+    padding: 15px;
+    width: 100px;
+    background-color: #575e1a;
+    color: white;
+    border-radius: 14px;
+    cursor: pointer;
+}
+
+.input-box {
+    margin-left: 5px;
+    width: 75%;
+    outline: none;
+    padding: 15px;
+
+    margin: 10px;
+    border: 1px solid #000;
+    border-radius: 14px;
+}
+
+.home-header {
+    text-align: center;
+    margin: 15px;
+    color: #353943;
+    font-size: 1.8rem;
+}
+
+.history-container {
+    display: flex;
+    padding: 25px;
+    flex-direction: column;
+    align-items: center;
+}
+
+.btn-container {
+    display: flex;
+    margin: 15px;
+    background-color: #191515;
+    border-radius: 15px;
+}
+
+.left {
+    border-radius: 15px;
+}
+
+.right {
+    border-radius: 15px;
+}
+
+.selected-left {
+    background-color: #c3c3c3;
+    color: #191515;
+    border-radius: 15px;
+    margin: 10px;
+}
+
+.selected-right {
+    background-color: #c3c3c3;
+    color: #191515;
+    margin: 10px;
+    border-radius: 15px;
+}
+
+.history-elements-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
+}
+
+.about-container {
+    text-align: center;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.about-header {
+    font-size: 2.3rem;
+    color: #5c5205;
+    margin: 15px;
+}
+
+.participants {
+    font-size: 1.3rem;
+    color: #191515;
+    margin: 10px;
+}
+
+.names-container {
+    align-self: center;
+    width: 65%;
+    max-width: 450px;
+    text-align: center;
+    margin: 15px;
+    background-color: #f4eaea;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0px 3px 5px black;
+}
+
+.name-rollno {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+    margin: 8px;
+}
+
+.aboutText {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #313131;
+}
+
+.history-elements-container {
+    width: 100%;
+}
+
+/* Styles specific for the login page */
+.login-container {
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: auto;
+    border: 1px solid #ccc;
+    border-radius: 15px;
+    background-color: #f9f9f9;
+    width: 60%;
+}
+
+.login-header {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    color: #353943;
+}
+
+.error-message {
+    color: red;
+    margin-top: 10px;
+}

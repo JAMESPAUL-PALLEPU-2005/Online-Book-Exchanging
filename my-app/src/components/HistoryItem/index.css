@@ -1,0 +1,32 @@
+.history-item-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 15px;
+    background-color: beige;
+    padding: 40px 25px;
+    border-radius: 15px;
+    box-shadow: 0px 3px 5px black;
+    height: 250px;
+}
+
+@media screen and (max-width: 767px) {
+    .history-item-container {
+        width: 80%;
+    }
+}
+
+@media screen and (min-width: 768px) {
+    .history-item-container {
+        width: 45%;
+    }
+}
+
+.icon {
+    width: 25px;
+}
+
+.removeBtn {
+    border: none;
+    background-color: rgba(0, 0, 0, 0);
+}
