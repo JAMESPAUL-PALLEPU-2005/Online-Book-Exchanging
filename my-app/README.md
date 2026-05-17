@@ -1,70 +1,84 @@
-# Getting Started with Create React App
+# 📚 Online Book Exchange
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A web-based book exchange platform built with React and Firebase. Users can browse books using an external API, manage their own listings via Firebase Firestore, and log in with Firebase Authentication.
 
-## Available Scripts
+## ⚙ Tech Stack
 
-In the project directory, you can run:
+- *Frontend*: React.js, React Router  
+- *Backend/Database*: Firebase Firestore  
+- *Authentication*: Firebase Auth  
+- *External API*: [CCBP Book Store API](https://apis.ccbp.in/book-store)
 
-### `npm start`
+## ✨ Features
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- 🔐 Firebase Authentication (Login/Register)
+- 📖 Browse books using the CCBP Book Store API
+- 🔍 Search books by title
+- ➕ Add your own books (stored in Firebase Firestore)
+- ❌ Delete your own book listings
+- 📋 View all books added by users
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 🚀 Getting Started
 
-### `npm test`
+### Prerequisites
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- Node.js and npm
+- Firebase project with Firestore and Authentication enabled
 
-### `npm run build`
+### Setup Instructions
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+1. *Clone the repository:*
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+   bash
+   git clone https://github.com/HANOKPAUL2004/Online-Book-Exchanging.git
+   cd OnlineBookExchange
+   
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+2. *Install dependencies:*
 
-### `npm run eject`
+   bash
+   npm install
+   
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+3. *Set up Firebase:*
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+   Create a file called firebase.js in the src/ directory and add the following:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+   js
+   import { initializeApp } from 'firebase/app';
+   import { getFirestore } from 'firebase/firestore';
+   import { getAuth } from 'firebase/auth';
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+   const firebaseConfig = {
+     apiKey: 'YOUR_API_KEY',
+     authDomain: 'YOUR_AUTH_DOMAIN',
+     projectId: 'YOUR_PROJECT_ID',
+     storageBucket: 'YOUR_STORAGE_BUCKET',
+     messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
+     appId: 'YOUR_APP_ID',
+   };
 
-## Learn More
+   const app = initializeApp(firebaseConfig);
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+   export const firestore = getFirestore(app);
+   export const auth = getAuth(app);
+   
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+4. *Start the development server:*
 
-### Code Splitting
+   bash
+   npm start
+   
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## 📝 Notes
 
-### Analyzing the Bundle Size
+- Firebase Firestore is used for storing user-uploaded books.
+- Only authenticated users can add or delete books.
+- A search bar is available for filtering book titles from the CCBP API.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## 🔜 Future Improvements
 
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- Image uploads for book entries (using Firebase Storage)
+- Book lending or request tracking system
+- Filters by category, author, or availability
+- Pagination and lazy loading
