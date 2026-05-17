@@ -30,7 +30,7 @@ A web-based book exchange platform built with React and Firebase. Users can brow
 1. *Clone the repository:*
 
    bash
-   git clone https://github.com/HANOKPAUL2004/Online-Book-Exchanging.git
+   git clone https://github.com/JAMESPAUL-PALLEPU-2005/Online-Book-Exchanging.git
    cd OnlineBookExchange
    
 
