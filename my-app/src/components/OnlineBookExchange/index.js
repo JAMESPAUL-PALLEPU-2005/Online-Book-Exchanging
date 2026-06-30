@@ -148,8 +148,8 @@ class OnlineBookExchange extends Component {
                 <h1 className='about-header'>ONLINE BOOK EXCHANGE PROTOTYPE</h1>
                 <p>A place where you can lend and borrow books.</p>
                 <br></br><p>For any Help please contact us.</p><br></br>
-                <p>Our Details:6304794105,7995952941</p>
-                <br></br><p>email:22r01a05b0@cmrithyderabad.edu.in</p>
+                <p>Our Details:8885490454</p>
+                <br></br><p>email:23b81a0518@cvr.ac.in</p>
             </div>
         );
     };
