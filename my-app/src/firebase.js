@@ -12,7 +12,10 @@ const firebaseConfig = {
   appId: process.env.REACT_APP_FIREBASE_APP_ID || 'YOUR_APP_ID',
 };
 
-const isMock = !firebaseConfig.apiKey || firebaseConfig.apiKey === 'YOUR_API_KEY';
+const isMock = !firebaseConfig.apiKey || 
+               firebaseConfig.apiKey === 'YOUR_API_KEY' || 
+               firebaseConfig.apiKey === 'undefined' || 
+               firebaseConfig.apiKey.trim() === '';
 
 let app;
 let firestoreInstance;
@@ -77,6 +80,7 @@ const mockGetDocs = async (queryRef) => {
       if (filter.type === 'where') {
         const { field, op, value } = filter;
         items = items.filter((item) => {
+          if (!item) return false;
           const itemVal = item[field];
           if (!itemVal) return false;
           if (op === '==') return itemVal === value;
@@ -88,10 +92,12 @@ const mockGetDocs = async (queryRef) => {
     });
   }
 
-  const docs = items.map((item) => ({
-    id: item.id,
-    data: () => item,
-  }));
+  const docs = items
+    .filter((item) => !!item)
+    .map((item) => ({
+      id: item.id || generateUuid(),
+      data: () => item,
+    }));
 
   return {
     empty: docs.length === 0,
@@ -103,7 +109,7 @@ const mockGetDocs = async (queryRef) => {
 const mockGetDoc = async (docRef) => {
   const collectionName = docRef.name;
   const items = getLocalCollection(collectionName);
-  const item = items.find((i) => i.id === docRef.id);
+  const item = items.find((i) => i && i.id === docRef.id);
 
   return {
     exists: () => !!item,
