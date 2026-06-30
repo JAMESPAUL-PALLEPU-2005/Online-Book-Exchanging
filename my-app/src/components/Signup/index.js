@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { firestore } from '../../firebase'; // Adjust the import path as needed
-import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
+import { firestore, collection, addDoc, getDocs, query, where } from '../../firebase'; // Adjust the import path as needed
 import './index.css';
 
 

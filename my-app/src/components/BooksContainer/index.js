@@ -1,10 +1,9 @@
 import React, { Component } from 'react';
 import { Puff } from 'react-loader-spinner';
 import { v4 } from 'uuid';
-import { collection, query, where, getDocs, addDoc, doc, getDoc } from 'firebase/firestore';
+import { firestore, collection, query, where, getDocs, addDoc, doc, getDoc } from '../../firebase'; // Adjust the path as needed
 import BookItem from '../BookItem';
 import './index.css';
-import { firestore } from '../../firebase'; // Adjust the path as needed
 
 class BooksContainer extends Component {
     state = { isLoading: false, searchResultsBooks: [] };

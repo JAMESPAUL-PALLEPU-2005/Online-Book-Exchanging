@@ -2,8 +2,7 @@ import React, { Component } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Header from '../Header';
 import HistoryItem from '../HistoryItem';
-import { doc, deleteDoc } from 'firebase/firestore';
-import { firestore } from '../../firebase';
+import { firestore, doc, deleteDoc } from '../../firebase';
 import BooksContainer from '../BooksContainer';
 import './index.css';
 
