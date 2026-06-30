@@ -47,7 +47,7 @@ const Signup = () => {
       navigate('/login');
     } catch (e) {
       console.error('Error adding document: ', e);
-      setError('Error signing up. Please try again.');
+      setError(`Error signing up: ${e.message || e.toString()}`);
     }
   };
 

@@ -37,7 +37,7 @@ const Login = () => {
       }
     } catch (e) {
       console.error('Error logging in: ', e);
-      setError('Error logging in. Please try again.');
+      setError(`Error logging in: ${e.message || e.toString()}`);
     }
   };
 
