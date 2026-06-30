@@ -169,7 +169,7 @@ class OnlineBookExchange extends Component {
     };
 
     render() {
-        const { currentTab, isAuthenticated, userId } = this.state;
+        const { currentTab, isAuthenticated } = this.state;
         let component = null;
 
         if (!isAuthenticated) {
