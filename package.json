@@ -1,0 +1,8 @@
+{
+  "name": "online-book-exchange-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm run build --prefix my-app"
+  }
+}
