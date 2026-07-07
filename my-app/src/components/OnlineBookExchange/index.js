@@ -17,13 +17,14 @@ class OnlineBookExchange extends Component {
         displayAdded: false,
         historySelector: 'requestedBooks',
         isAuthenticated: localStorage.getItem('isAuthenticated') === 'true',
-        userId: '',
+        userId: localStorage.getItem('userId') || '',
     };
 
     componentDidMount() {
         const { state } = this.props.location;
         if (state && state.userId) {
             this.setState({ userId: state.userId });
+            localStorage.setItem('userId', state.userId);
         }
     }
 

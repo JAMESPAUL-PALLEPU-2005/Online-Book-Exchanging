@@ -16,6 +16,7 @@ const Header = (props) => {
 
     const handleLogout = () => {
         localStorage.setItem('isAuthenticated', 'false'); // Make sure to store 'false' as a string
+        localStorage.removeItem('userId');
         navigate('/login');
     };
 

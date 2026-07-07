@@ -29,6 +29,7 @@ const Login = () => {
       if (user && user.password === password) {
         // Set isAuthenticated to true
         localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('userId', user.id);
         // Pass user ID to the home route
         navigate('/', { state: { userId: user.id } });
       } else {
