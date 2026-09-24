@@ -2,8 +2,6 @@ import React, { Component } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Header from '../Header';
 import HistoryItem from '../HistoryItem';
-import { doc, deleteDoc } from 'firebase/firestore';
-import { firestore } from '../../firebase';
 import BooksContainer from '../BooksContainer';
 import './index.css';
 
@@ -18,22 +16,42 @@ class OnlineBookExchange extends Component {
         displayAdded: false,
         historySelector: 'requestedBooks',
         isAuthenticated: localStorage.getItem('isAuthenticated') === 'true',
-        userId: '',
+        userId: localStorage.getItem('userId') || '',
     };
 
     componentDidMount() {
-        const { state } = this.props.location;
-        if (state && state.userId) {
-            this.setState({ userId: state.userId });
+        const { location } = this.props;
+        const stateUserId = location && location.state && location.state.userId;
+        const currentUserId = stateUserId || localStorage.getItem('userId');
+
+        if (currentUserId) {
+            this.setState({ userId: currentUserId });
+            this.fetchUserData(currentUserId);
         }
     }
+
+    fetchUserData = async (userId) => {
+        if (!userId) return;
+        try {
+            const response = await fetch(`/api/user-data/${userId}`);
+            if (response.ok) {
+                const data = await response.json();
+                this.setState({
+                    yourBooksList: data.yourBooks || [],
+                    requestedBooks: data.requestedBooks || [],
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+        }
+    };
 
     changeSearchType = () => {
         this.setState((previousState) => {
             if (previousState.searchType === 'findBook') {
-                return { searchType: 'addBook' };
+                return { searchType: 'addBook', displayAdded: false };
             }
-            return { searchType: 'findBook' };
+            return { searchType: 'findBook', displayAdded: false };
         });
     };
 
@@ -41,9 +59,8 @@ class OnlineBookExchange extends Component {
         this.setState((prevState) => {
             if (prevState.historySelector === 'requestedBooks') {
                 return { historySelector: 'yourBooks' };
-            } else if (prevState.historySelector === 'yourBooks') {
-                return { historySelector: 'requestedBooks' };
             }
+            return { historySelector: 'requestedBooks' };
         });
     };
 
@@ -58,6 +75,9 @@ class OnlineBookExchange extends Component {
 
     changeTab = (value) => {
         this.setState({ currentTab: value, displayAdded: false });
+        if (value === 'history' && this.state.userId) {
+            this.fetchUserData(this.state.userId);
+        }
     };
 
     updateSearchValue = (e) => {
@@ -73,23 +93,29 @@ class OnlineBookExchange extends Component {
     removeBook = async (id) => {
         try {
             if (this.state.historySelector === 'requestedBooks') {
-                this.setState((prevState) => ({
-                    requestedBooks: prevState.requestedBooks.filter((book) => book.id !== id)
-                }));
+                const response = await fetch(`/api/requests/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    this.setState((prevState) => ({
+                        requestedBooks: prevState.requestedBooks.filter((book) => book.id !== id)
+                    }));
+                }
             } else {
-                // Remove the book from Firestore
-                await deleteDoc(doc(firestore, 'books', id));
+                const response = await fetch(`/api/books/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    this.setState((prevState) => ({
+                        yourBooksList: prevState.yourBooksList.filter((book) => book.id !== id)
+                    }));
+                }
             }
         } catch (error) {
-            console.error("Error removing book: ", error);
+            console.error('Error removing book: ', error);
         }
     };
-    
 
     renderHome = () => {
         const { searchType, searchValue, isSearchOn, displayAdded } = this.state;
         const buttonContent = searchType === 'findBook' ? 'Add Book' : 'Find Book';
-        const addSectionContent = searchType === 'findBook' ? 'Requested the book to the people who added the book.' : 'Added your books for others to find.';
+        const addSectionContent = searchType === 'findBook' ? 'Requested the book from the user who listed it.' : 'Added your book for others to trade.';
         const headContent = searchType === 'findBook' ? 'Find The Books You Love ...' : 'Add Your Book For Others To Trade ...';
 
         return (
@@ -97,6 +123,9 @@ class OnlineBookExchange extends Component {
                 {displayAdded ? (
                     <div className="added-container">
                         <h1 className="added-text">{addSectionContent}</h1>
+                        <button type="button" onClick={() => this.setState({ displayAdded: false })} className="btn" style={{ marginTop: '20px' }}>
+                            Back to Books
+                        </button>
                     </div>
                 ) : (
                     <>
@@ -106,13 +135,20 @@ class OnlineBookExchange extends Component {
                                 type="search"
                                 value={searchValue}
                                 className="input-box"
-                                placeholder='Search Books'
+                                placeholder="Search Books"
                                 onChange={this.updateSearchValue}
                                 onKeyPress={this.triggerSearchOnEnter}
                             />
                         </div>
                         <h1 className="home-header">{headContent}</h1>
-                        {isSearchOn && <BooksContainer searchValue={searchValue} searchType={searchType} userId={this.state.userId} addBook={this.addBook} />}
+                        {isSearchOn && (
+                            <BooksContainer
+                                searchValue={searchValue}
+                                searchType={searchType}
+                                userId={this.state.userId}
+                                addBook={this.addBook}
+                            />
+                        )}
                     </>
                 )}
             </div>
@@ -125,9 +161,17 @@ class OnlineBookExchange extends Component {
         const yourBooksClass = historySelector === 'yourBooks' ? 'selected-right' : '';
         let historyContainer;
         if (historySelector === 'requestedBooks') {
-            historyContainer = requestedBooks.map((eachBook) => <HistoryItem key={eachBook.id} bookDetails={eachBook} removeBook={this.removeBook} />);
+            historyContainer = requestedBooks.length === 0 ? (
+                <p style={{ color: '#fff', fontSize: '18px', marginTop: '20px' }}>No requested books yet.</p>
+            ) : (
+                requestedBooks.map((eachBook) => <HistoryItem key={eachBook.id} bookDetails={eachBook} removeBook={this.removeBook} />)
+            );
         } else {
-            historyContainer = yourBooksList.map((eachBook) => <HistoryItem key={eachBook.id} bookDetails={eachBook} removeBook={this.removeBook} />);
+            historyContainer = yourBooksList.length === 0 ? (
+                <p style={{ color: '#fff', fontSize: '18px', marginTop: '20px' }}>You haven't listed any books yet.</p>
+            ) : (
+                yourBooksList.map((eachBook) => <HistoryItem key={eachBook.id} bookDetails={eachBook} removeBook={this.removeBook} />)
+            );
         }
 
         return (
@@ -136,7 +180,7 @@ class OnlineBookExchange extends Component {
                     <button className={`history-btn left ${requestedBooksClass}`} onClick={this.changeHistoryType}>Requested Books</button>
                     <button className={`history-btn right ${yourBooksClass}`} onClick={this.changeHistoryType}>Your Books</button>
                 </div>
-                <div className='history-elements-container'>
+                <div className="history-elements-container">
                     {historyContainer}
                 </div>
             </div>
@@ -145,12 +189,15 @@ class OnlineBookExchange extends Component {
 
     renderAbout = () => {
         return (
-            <div className='about-container'>
-                <h1 className='about-header'>ONLINE BOOK EXCHANGE PROTOTYPE</h1>
-                <p>A place where you can lend and borrow books.</p>
-                <br></br><p>For any Help please contact us.</p><br></br>
-                <p>Our Details:6304794105,7995952941</p>
-                <br></br><p>email:22r01a05b0@cmrithyderabad.edu.in</p>
+            <div className="about-container">
+                <h1 className="about-header">ONLINE BOOK EXCHANGE</h1>
+                <p>A community platform where book lovers can lend and borrow books seamlessly.</p>
+                <br />
+                <p>For any help or feedback, please contact us:</p>
+                <br />
+                <p>Contact Numbers: +91 6304794105, +91 7995952941</p>
+                <br />
+                <p>Email: 22r01a05b0@cmrithyderabad.edu.in</p>
             </div>
         );
     };
@@ -169,7 +216,7 @@ class OnlineBookExchange extends Component {
     };
 
     render() {
-        const { currentTab, isAuthenticated, userId } = this.state;
+        const { currentTab, isAuthenticated } = this.state;
         let component = null;
 
         if (!isAuthenticated) {
@@ -196,7 +243,7 @@ class OnlineBookExchange extends Component {
 
         return (
             <div className="online-book-exchange-container">
-                <Header changeTab={this.changeTab} currentTab={this.state.currentTab}/>
+                <Header changeTab={this.changeTab} currentTab={this.state.currentTab} />
                 {component}
             </div>
         );

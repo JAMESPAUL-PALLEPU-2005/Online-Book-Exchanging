@@ -1,5 +1,6 @@
-import './index.css';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import './index.css';
 
 const Header = (props) => {
     const { currentTab, changeTab } = props;
@@ -9,13 +10,13 @@ const Header = (props) => {
     const navigate = useNavigate();
 
     const setTab = (value) => {
-        // console.log(value);
-        // console.log(currentTab);
         changeTab(value);
     };
 
     const handleLogout = () => {
-        localStorage.setItem('isAuthenticated', 'false'); // Make sure to store 'false' as a string
+        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('username');
         navigate('/login');
     };
 
@@ -26,7 +27,7 @@ const Header = (props) => {
                 <p className={`tab-text ${classNameHome}`} onClick={() => setTab('home')}>Home</p>
                 <p className={`tab-text ${classNameHistory}`} onClick={() => setTab('history')}>History</p>
                 <p className={`tab-text ${classNameAbout}`} onClick={() => setTab('about')}>About</p>
-                <p className={`tab-text`} onClick={() => handleLogout()}>Logout</p>
+                <p className="tab-text" onClick={handleLogout}>Logout</p>
             </div>
         </div>
     );

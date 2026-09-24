@@ -1,40 +1,50 @@
 import React, { Component } from 'react';
 import { Puff } from 'react-loader-spinner';
-import { v4 } from 'uuid';
-import { collection, query, where, getDocs, addDoc, doc, getDoc } from 'firebase/firestore';
+import { v4 as uuidv4 } from 'uuid';
 import BookItem from '../BookItem';
 import './index.css';
-import { firestore } from '../../firebase'; // Adjust the path as needed
 
 class BooksContainer extends Component {
     state = { isLoading: false, searchResultsBooks: [] };
 
     searchBooks = async () => {
         const { searchValue, searchType } = this.props;
-        const searchValueUrl = searchValue.replace(' ', '+');
+        this.setState({ isLoading: true });
 
         if (searchType === 'addBook') {
-            const apiResponse = await fetch(`https://apis.ccbp.in/book-store?title=${searchValueUrl}`);
-            const result = await apiResponse.json();
-            const updatedBooksWithId = result.search_results.map((eachResult) => {
-                return { ...eachResult, id: v4() };
-            });
-            this.setState({ isLoading: false, searchResultsBooks: updatedBooksWithId });
-        } else if (searchType === 'findBook') {
-            const q = query(collection(firestore, 'books'), where('title', '>=', searchValue), where('title', '<=', searchValue + '\uf8ff'));
-            const querySnapshot = await getDocs(q);
-            const booksList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-            // Fetch user details for each book
-            const booksWithUserDetails = await Promise.all(booksList.map(async (book) => {
-                const userDoc = await getDoc(doc(firestore, 'users', book.userId));
-                if (userDoc.exists()) {
-                    return { ...book, username: userDoc.data().username, mobileNumber: userDoc.data().mobile };
+            try {
+                const queryParam = searchValue ? searchValue.replace(/\s+/g, '+') : 'react';
+                const apiResponse = await fetch(`https://apis.ccbp.in/book-store?title=${queryParam}`);
+                if (apiResponse.ok) {
+                    const result = await apiResponse.json();
+                    const updatedBooksWithId = (result.search_results || []).map((eachResult) => ({
+                        id: uuidv4(),
+                        title: eachResult.title || 'Untitled Book',
+                        author: eachResult.author || 'Unknown Author',
+                        imageLink: eachResult.image_url || 'https://assets.ccbp.in/frontend/react-js/book-store-img.png',
+                    }));
+                    this.setState({ isLoading: false, searchResultsBooks: updatedBooksWithId });
+                } else {
+                    this.setState({ isLoading: false, searchResultsBooks: [] });
                 }
-                return book;
-            }));
-
-            this.setState({ isLoading: false, searchResultsBooks: booksWithUserDetails });
+            } catch (err) {
+                console.error('Error fetching external books API:', err);
+                this.setState({ isLoading: false, searchResultsBooks: [] });
+            }
+        } else if (searchType === 'findBook') {
+            try {
+                const searchParam = searchValue ? encodeURIComponent(searchValue) : '';
+                const response = await fetch(`/api/books?search=${searchParam}`);
+                if (response.ok) {
+                    const booksList = await response.json();
+                    this.setState({ isLoading: false, searchResultsBooks: booksList });
+                } else {
+                    this.setState({ isLoading: false, searchResultsBooks: [] });
+                }
+            } catch (err) {
+                console.error('Error fetching books from backend:', err);
+                this.setState({ isLoading: false, searchResultsBooks: [] });
+            }
         }
     };
 
@@ -48,19 +58,64 @@ class BooksContainer extends Component {
         }
     }
 
-    addBookToFirestore = async (book) => {
-        const { userId } = this.props;
-        const userDoc = await getDoc(doc(firestore, 'users', userId));
-        if (userDoc.exists()) {
-            const userData = userDoc.data();
-            const bookData = {
-                ...book,
-                userId,
-                username: userData.username,
-                mobile: userData.mobile
-            };
-            await addDoc(collection(firestore, 'books'), bookData);
-            this.props.addBook(bookData);
+    handleBookAction = async (book) => {
+        const { userId, searchType, addBook } = this.props;
+        const currentUserId = userId || localStorage.getItem('userId');
+
+        if (!currentUserId) {
+            alert('Please log in first.');
+            return;
+        }
+
+        if (searchType === 'addBook') {
+            try {
+                const response = await fetch('/api/books', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: book.title,
+                        author: book.author,
+                        imageLink: book.imageLink,
+                        userId: currentUserId,
+                    }),
+                });
+                if (response.ok) {
+                    const addedBook = await response.json();
+                    addBook(addedBook);
+                    alert(`"${book.title}" added to your books for lending!`);
+                } else {
+                    const err = await response.json();
+                    alert(err.error || 'Failed to add book');
+                }
+            } catch (error) {
+                console.error('Error adding book:', error);
+                alert('Error adding book. Please try again.');
+            }
+        } else if (searchType === 'findBook') {
+            try {
+                const response = await fetch('/api/requests', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: currentUserId,
+                        bookId: book.id,
+                        title: book.title,
+                        author: book.author,
+                        imageLink: book.imageLink,
+                        ownerUsername: book.username,
+                        ownerMobile: book.mobileNumber,
+                    }),
+                });
+                if (response.ok) {
+                    const requestedBook = await response.json();
+                    addBook(requestedBook);
+                    alert(`Requested "${book.title}"!\nLender Username: ${book.username}\nContact: ${book.mobileNumber}`);
+                } else {
+                    alert('Error submitting borrow request.');
+                }
+            } catch (error) {
+                console.error('Error requesting book:', error);
+            }
         }
     };
 
@@ -71,13 +126,15 @@ class BooksContainer extends Component {
         return (
             <div className="books-items-container">
                 {isLoading ? (
-                    <Puff color="#575e1a" height={550} width={80} />
+                    <Puff color="#575e1a" height={80} width={80} />
+                ) : searchResultsBooks.length === 0 ? (
+                    <p style={{ color: '#fff', fontSize: '18px', marginTop: '20px' }}>No books found.</p>
                 ) : (
                     searchResultsBooks.map((eachBook) => (
                         <BookItem
                             key={eachBook.id}
                             bookDetails={eachBook}
-                            addBookInner={this.addBookToFirestore}
+                            addBookInner={this.handleBookAction}
                             searchType={searchType}
                         />
                     ))

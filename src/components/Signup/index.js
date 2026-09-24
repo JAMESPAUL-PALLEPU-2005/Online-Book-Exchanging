@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { firestore } from '../../firebase'; // Adjust the import path as needed
-import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
+import { useNavigate, Link } from 'react-router-dom';
 import './index.css';
-
 
 const Signup = () => {
   const [username, setUsername] = useState('');
@@ -14,47 +11,48 @@ const Signup = () => {
   const navigate = useNavigate();
 
   const handleSignup = async () => {
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
+    if (username.trim() === '' || password.trim() === '') {
+      setError('Fill in the details');
       return;
     }
     if (mobile.length !== 10) {
       setError('Mobile number must be 10 digits');
       return;
     }
-    if (username === '' || password === '') {
-        setError('Fill in the details');
-        return;
-    }
-
-    // Check if the username already exists in Firestore
-    const usersRef = collection(firestore, 'users');
-    const q = query(usersRef, where('username', '==', username));
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-      setError('Username already exists');
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
       return;
     }
 
     try {
-      // Add a new user document to Firestore
-      await addDoc(usersRef, {
-        username,
-        password,
-        mobile
+      const response = await fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: username.trim(),
+          password: password.trim(),
+          mobile: mobile.trim()
+        }),
       });
-      console.log('Signup successful');
-      setError('');
-      navigate('/login');
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log('Signup successful');
+        setError('');
+        navigate('/login');
+      } else {
+        setError(data.error || 'Error signing up. Please try again.');
+      }
     } catch (e) {
-      console.error('Error adding document: ', e);
-      setError('Error signing up. Please try again.');
+      console.error('Error signing up: ', e);
+      setError('Error signing up. Please check your connection and try again.');
     }
   };
 
   return (
     <div className="a-bg-container">
-      <h1 className='website-heading auth-head'>ONLINE BOOK EXCHANGE</h1>
+      <h1 className="website-heading auth-head">ONLINE BOOK EXCHANGE</h1>
       <div className="signup-container">
         <h1 className="signup-header">Sign Up</h1>
         <input
@@ -87,7 +85,9 @@ const Signup = () => {
         />
         <button onClick={handleSignup} className="btn">Sign Up</button>
         {error && <p className="error-message">{error}</p>}
-        <p className='aboutText'>Already have an account? <a className="hyp"href="/login"onClick={() => navigate('/login')}>Login</a></p>
+        <p className="aboutText">
+          Already have an account? <Link className="hyp" to="/login">Login</Link>
+        </p>
       </div>
     </div>
   );
