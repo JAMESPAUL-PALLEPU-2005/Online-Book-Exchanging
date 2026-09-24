@@ -2,14 +2,15 @@ import './index.css';
 
 const BookItem = (props) => {
     const { bookDetails, addBookInner, searchType } = props;
-    const { author, title, imageLink, username, mobileNumber } = bookDetails;
+    const { author, title, imageLink, username, email, mobileNumber } = bookDetails;
 
     const handleClick = async () => {
         if (searchType === 'addBook') {
             await addBookInner(bookDetails);
         } else if (searchType === 'findBook') {
-            alert(`Book added by: ${username}\nContact: ${mobileNumber}`);
-            await addBookInner(bookDetails)
+            const emailInfo = email ? `\nEmail: ${email}` : '';
+            alert(`Book listed by: ${username}${emailInfo}\nMobile: ${mobileNumber}`);
+            await addBookInner(bookDetails);
         }
     };
 

@@ -103,13 +103,15 @@ class BooksContainer extends Component {
                         author: book.author,
                         imageLink: book.imageLink,
                         ownerUsername: book.username,
+                        ownerEmail: book.email,
                         ownerMobile: book.mobileNumber,
                     }),
                 });
                 if (response.ok) {
                     const requestedBook = await response.json();
                     addBook(requestedBook);
-                    alert(`Requested "${book.title}"!\nLender Username: ${book.username}\nContact: ${book.mobileNumber}`);
+                    const emailMsg = book.email ? `\nEmail: ${book.email}` : '';
+                    alert(`Requested "${book.title}"!\nLender Username: ${book.username}${emailMsg}\nContact: ${book.mobileNumber}`);
                 } else {
                     alert('Error submitting borrow request.');
                 }

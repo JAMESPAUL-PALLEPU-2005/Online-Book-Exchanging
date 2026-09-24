@@ -4,6 +4,7 @@ import './index.css';
 
 const Signup = () => {
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mobile, setMobile] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -11,11 +12,16 @@ const Signup = () => {
   const navigate = useNavigate();
 
   const handleSignup = async () => {
-    if (username.trim() === '' || password.trim() === '') {
-      setError('Fill in the details');
+    if (username.trim() === '' || email.trim() === '' || password.trim() === '') {
+      setError('Fill in all required details');
       return;
     }
-    if (mobile.length !== 10) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    if (mobile.trim().length !== 10) {
       setError('Mobile number must be 10 digits');
       return;
     }
@@ -30,6 +36,7 @@ const Signup = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username: username.trim(),
+          email: email.trim(),
           password: password.trim(),
           mobile: mobile.trim()
         }),
@@ -60,6 +67,13 @@ const Signup = () => {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           placeholder="Username"
+          className="input-box"
+        />
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email ID"
           className="input-box"
         />
         <input

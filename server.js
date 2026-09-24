@@ -5,25 +5,26 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const MONGODB_URI = process.env.MONGODB_URI;
 
 app.use(cors());
 app.use(express.json());
 
 // MongoDB User Schema
 const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
+  username: { type: String, required: true, unique: true, trim: true },
+  email: { type: String, required: true, trim: true, lowercase: true },
   password: { type: String, required: true },
-  mobile: { type: String, required: true },
+  mobile: { type: String, required: true, trim: true },
 }, { timestamps: true });
 
 // MongoDB Book Schema
 const bookSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  author: { type: String, required: true },
+  title: { type: String, required: true, trim: true },
+  author: { type: String, required: true, trim: true },
   imageLink: { type: String, default: 'https://assets.ccbp.in/frontend/react-js/book-store-img.png' },
   userId: { type: String, required: true },
   username: { type: String, required: true },
+  email: { type: String },
   mobile: { type: String, required: true },
 }, { timestamps: true });
 
@@ -35,6 +36,7 @@ const requestSchema = new mongoose.Schema({
   author: { type: String, required: true },
   imageLink: { type: String, default: 'https://assets.ccbp.in/frontend/react-js/book-store-img.png' },
   ownerUsername: { type: String },
+  ownerEmail: { type: String },
   ownerMobile: { type: String },
 }, { timestamps: true });
 
@@ -71,24 +73,43 @@ app.use(async (req, res, next) => {
 
 // Signup Route
 app.post('/api/signup', async (req, res) => {
-  const { username, password, mobile } = req.body;
-  if (!username || !password || !mobile) {
+  const { username, email, password, mobile } = req.body;
+  if (!username || !email || !password || !mobile) {
     return res.status(400).json({ error: 'Please fill in all details' });
   }
-  if (mobile.length !== 10) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email.trim())) {
+    return res.status(400).json({ error: 'Please enter a valid email address' });
+  }
+  if (mobile.trim().length !== 10) {
     return res.status(400).json({ error: 'Mobile number must be 10 digits' });
   }
   try {
-    const existingUser = await User.findOne({ username });
-    if (existingUser) {
+    const existingUsername = await User.findOne({ username: username.trim() });
+    if (existingUsername) {
       return res.status(400).json({ error: 'Username already exists' });
     }
-    const newUser = new User({ username, password, mobile });
+    const existingEmail = await User.findOne({ email: email.trim().toLowerCase() });
+    if (existingEmail) {
+      return res.status(400).json({ error: 'Email is already registered' });
+    }
+    const newUser = new User({
+      username: username.trim(),
+      email: email.trim().toLowerCase(),
+      password: password.trim(),
+      mobile: mobile.trim()
+    });
     await newUser.save();
-    return res.status(201).json({ id: newUser._id, username: newUser.username, mobile: newUser.mobile });
+    console.log(`User created successfully in MongoDB Atlas: ${newUser.username} (${newUser.email})`);
+    return res.status(201).json({
+      id: newUser._id.toString(),
+      username: newUser.username,
+      email: newUser.email,
+      mobile: newUser.mobile
+    });
   } catch (err) {
     console.error('Signup error:', err);
-    return res.status(500).json({ error: 'Server error during signup' });
+    return res.status(500).json({ error: 'Server error during signup', details: err.message });
   }
 });
 
@@ -99,11 +120,16 @@ app.post('/api/login', async (req, res) => {
     return res.status(400).json({ error: 'Please fill in all details' });
   }
   try {
-    const user = await User.findOne({ username });
-    if (!user || user.password !== password) {
+    const user = await User.findOne({ username: username.trim() });
+    if (!user || user.password !== password.trim()) {
       return res.status(400).json({ error: 'Invalid username or password' });
     }
-    return res.json({ id: user._id, username: user.username, mobile: user.mobile });
+    return res.json({
+      id: user._id.toString(),
+      username: user.username,
+      email: user.email,
+      mobile: user.mobile
+    });
   } catch (err) {
     console.error('Login error:', err);
     return res.status(500).json({ error: 'Server error during login' });
@@ -126,6 +152,7 @@ app.get('/api/books', async (req, res) => {
       imageLink: b.imageLink,
       userId: b.userId,
       username: b.username,
+      email: b.email || '',
       mobileNumber: b.mobile
     }));
     return res.json(formattedBooks);
@@ -147,11 +174,12 @@ app.post('/api/books', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     const newBook = new Book({
-      title,
-      author,
+      title: title.trim(),
+      author: author.trim(),
       imageLink: imageLink || 'https://assets.ccbp.in/frontend/react-js/book-store-img.png',
       userId: user._id.toString(),
       username: user.username,
+      email: user.email,
       mobile: user.mobile
     });
     await newBook.save();
@@ -162,6 +190,7 @@ app.post('/api/books', async (req, res) => {
       imageLink: newBook.imageLink,
       userId: newBook.userId,
       username: newBook.username,
+      email: newBook.email,
       mobileNumber: newBook.mobile
     });
   } catch (err) {
@@ -184,7 +213,7 @@ app.delete('/api/books/:id', async (req, res) => {
 
 // Request Book Route
 app.post('/api/requests', async (req, res) => {
-  const { userId, bookId, title, author, imageLink, ownerUsername, ownerMobile } = req.body;
+  const { userId, bookId, title, author, imageLink, ownerUsername, ownerEmail, ownerMobile } = req.body;
   try {
     const newRequest = new Request({
       userId,
@@ -193,6 +222,7 @@ app.post('/api/requests', async (req, res) => {
       author,
       imageLink: imageLink || 'https://assets.ccbp.in/frontend/react-js/book-store-img.png',
       ownerUsername,
+      ownerEmail,
       ownerMobile
     });
     await newRequest.save();
@@ -204,6 +234,7 @@ app.post('/api/requests', async (req, res) => {
       author: newRequest.author,
       imageLink: newRequest.imageLink,
       username: newRequest.ownerUsername,
+      email: newRequest.ownerEmail,
       mobileNumber: newRequest.ownerMobile
     });
   } catch (err) {
@@ -227,6 +258,7 @@ app.get('/api/user-data/:userId', async (req, res) => {
         imageLink: b.imageLink,
         userId: b.userId,
         username: b.username,
+        email: b.email || '',
         mobileNumber: b.mobile
       })),
       requestedBooks: requestedBooks.map(r => ({
@@ -235,6 +267,7 @@ app.get('/api/user-data/:userId', async (req, res) => {
         author: r.author,
         imageLink: r.imageLink,
         username: r.ownerUsername,
+        email: r.ownerEmail || '',
         mobileNumber: r.ownerMobile
       }))
     });
