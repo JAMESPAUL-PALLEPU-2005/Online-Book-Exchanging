@@ -17,6 +17,9 @@ class OnlineBookExchange extends Component {
         historySelector: 'requestedBooks',
         isAuthenticated: localStorage.getItem('isAuthenticated') === 'true',
         userId: localStorage.getItem('userId') || '',
+        customTitle: '',
+        customAuthor: '',
+        showManualAdd: false,
     };
 
     componentDidMount() {
@@ -49,9 +52,9 @@ class OnlineBookExchange extends Component {
     changeSearchType = () => {
         this.setState((previousState) => {
             if (previousState.searchType === 'findBook') {
-                return { searchType: 'addBook', displayAdded: false };
+                return { searchType: 'addBook', displayAdded: false, showManualAdd: false };
             }
-            return { searchType: 'findBook', displayAdded: false };
+            return { searchType: 'findBook', displayAdded: false, showManualAdd: false };
         });
     };
 
@@ -112,10 +115,49 @@ class OnlineBookExchange extends Component {
         }
     };
 
+    handleManualBookSubmit = async (e) => {
+        e.preventDefault();
+        const { customTitle, customAuthor, userId } = this.state;
+        const currentUserId = userId || localStorage.getItem('userId');
+
+        if (!customTitle.trim() || !customAuthor.trim()) {
+            alert('Please provide both Book Title and Author Name.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/books', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: customTitle.trim(),
+                    author: customAuthor.trim(),
+                    imageLink: 'https://assets.ccbp.in/frontend/react-js/book-store-img.png',
+                    userId: currentUserId,
+                }),
+            });
+
+            if (response.ok) {
+                const addedBook = await response.json();
+                this.addBook(addedBook);
+                this.setState({ customTitle: '', customAuthor: '', showManualAdd: false, displayAdded: true });
+                alert(`"${addedBook.title}" added to MongoDB database for lending!`);
+            } else {
+                const err = await response.json();
+                alert(err.error || 'Failed to add book');
+            }
+        } catch (err) {
+            console.error('Error adding manual book:', err);
+            alert('Error connecting to backend database.');
+        }
+    };
+
     renderHome = () => {
-        const { searchType, searchValue, isSearchOn, displayAdded } = this.state;
+        const { searchType, searchValue, isSearchOn, displayAdded, showManualAdd, customTitle, customAuthor } = this.state;
         const buttonContent = searchType === 'findBook' ? 'Add Book' : 'Find Book';
-        const addSectionContent = searchType === 'findBook' ? 'Requested the book from the user who listed it.' : 'Added your book for others to trade.';
+        const addSectionContent = searchType === 'findBook'
+            ? 'Requested the book selection from the lender in the database.'
+            : 'Successfully added your book to MongoDB database for others to borrow.';
         const headContent = searchType === 'findBook' ? 'Find The Books You Love ...' : 'Add Your Book For Others To Trade ...';
 
         return (
@@ -131,23 +173,63 @@ class OnlineBookExchange extends Component {
                     <>
                         <div className="operation-area">
                             <button type="button" onClick={this.changeSearchType} className="btn">{buttonContent}</button>
-                            <input
-                                type="search"
-                                value={searchValue}
-                                className="input-box"
-                                placeholder="Search Books"
-                                onChange={this.updateSearchValue}
-                                onKeyPress={this.triggerSearchOnEnter}
-                            />
+                            {searchType === 'addBook' && (
+                                <button
+                                    type="button"
+                                    onClick={() => this.setState((prevState) => ({ showManualAdd: !prevState.showManualAdd }))}
+                                    className="btn"
+                                    style={{ backgroundColor: showManualAdd ? '#d9534f' : '#28a745', marginLeft: '10px' }}
+                                >
+                                    {showManualAdd ? 'Search Library' : '+ Add Custom Book'}
+                                </button>
+                            )}
+                            {!showManualAdd && (
+                                <input
+                                    type="search"
+                                    value={searchValue}
+                                    className="input-box"
+                                    placeholder="Search Books"
+                                    onChange={this.updateSearchValue}
+                                    onKeyPress={this.triggerSearchOnEnter}
+                                />
+                            )}
                         </div>
-                        <h1 className="home-header">{headContent}</h1>
-                        {isSearchOn && (
-                            <BooksContainer
-                                searchValue={searchValue}
-                                searchType={searchType}
-                                userId={this.state.userId}
-                                addBook={this.addBook}
-                            />
+
+                        {showManualAdd ? (
+                            <form onSubmit={this.handleManualBookSubmit} className="manual-book-form" style={{ marginTop: '20px', textAlign: 'center' }}>
+                                <h2 style={{ color: '#fff', marginBottom: '15px' }}>Add a New Book to MongoDB</h2>
+                                <input
+                                    type="text"
+                                    placeholder="Book Title"
+                                    value={customTitle}
+                                    onChange={(e) => this.setState({ customTitle: e.target.value })}
+                                    className="input-box"
+                                    style={{ display: 'block', margin: '10px auto', width: '280px' }}
+                                    required
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Author Name"
+                                    value={customAuthor}
+                                    onChange={(e) => this.setState({ customAuthor: e.target.value })}
+                                    className="input-box"
+                                    style={{ display: 'block', margin: '10px auto', width: '280px' }}
+                                    required
+                                />
+                                <button type="submit" className="btn" style={{ marginTop: '10px' }}>Save Book to Database</button>
+                            </form>
+                        ) : (
+                            <>
+                                <h1 className="home-header">{headContent}</h1>
+                                {isSearchOn && (
+                                    <BooksContainer
+                                        searchValue={searchValue}
+                                        searchType={searchType}
+                                        userId={this.state.userId}
+                                        addBook={this.addBook}
+                                    />
+                                )}
+                            </>
                         )}
                     </>
                 )}
@@ -168,7 +250,7 @@ class OnlineBookExchange extends Component {
             );
         } else {
             historyContainer = yourBooksList.length === 0 ? (
-                <p style={{ color: '#fff', fontSize: '18px', marginTop: '20px' }}>You haven't listed any books yet.</p>
+                <p style={{ color: '#fff', fontSize: '18px', marginTop: '20px' }}>You haven't added any books to the database yet.</p>
             ) : (
                 yourBooksList.map((eachBook) => <HistoryItem key={eachBook.id} bookDetails={eachBook} removeBook={this.removeBook} />)
             );
