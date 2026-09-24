@@ -43,25 +43,30 @@ const Book = mongoose.model('Book', bookSchema);
 const Request = mongoose.model('Request', requestSchema);
 
 // DB Connection helper
-let isConnected = false;
+let cachedDb = null;
 const connectDB = async () => {
-  if (isConnected && mongoose.connection.readyState === 1) return;
-  if (!MONGODB_URI) {
-    console.error('MONGODB_URI environment variable is not defined.');
-    return;
+  if (mongoose.connection.readyState === 1) return;
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    throw new Error('MONGODB_URI environment variable is missing');
   }
-  try {
-    await mongoose.connect(MONGODB_URI);
-    isConnected = true;
+  if (!cachedDb) {
+    cachedDb = await mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 5000,
+    });
     console.log('Connected to MongoDB successfully.');
-  } catch (err) {
-    console.error('MongoDB connection error:', err);
   }
+  return cachedDb;
 };
 
 app.use(async (req, res, next) => {
-  await connectDB();
-  next();
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error('MongoDB connection error:', err);
+    res.status(500).json({ error: 'Database connection failed', details: err.message });
+  }
 });
 
 // Signup Route
@@ -250,6 +255,10 @@ app.delete('/api/requests/:id', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+module.exports = app;
