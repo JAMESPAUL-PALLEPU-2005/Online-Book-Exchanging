@@ -1,0 +1,2259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookBridge - Online Book Exchange Platform | 3D Interactive Collector's Book</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Cinzel+Decorative:wght@700;900&family=EB+Garamond:ital,wght@0,500;0,600;0,700;0,800;1,500;1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600;1,700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold-primary: #e5b85c;
+            --gold-light: #fef1cf;
+            --gold-dark: #a67324;
+            --leather-dark: #1b120c;
+            --bg-deep: #070911;
+            --card-glass: rgba(14, 18, 32, 0.85);
+            --card-border: rgba(229, 184, 92, 0.35);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: 
+                radial-gradient(circle at 50% 48%, rgba(28, 38, 66, 0.45) 0%, rgba(12, 17, 30, 0.7) 50%, transparent 80%),
+                radial-gradient(circle at 50% 95%, rgba(5, 7, 14, 0.95) 0%, transparent 85%),
+                linear-gradient(180deg, #070a12 0%, #030408 100%);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: var(--text-main);
+        }
+
+        /* 3D WebGL Canvas */
+        #webgl-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 2;
+            cursor: grab;
+            display: block;
+        }
+
+        #webgl-canvas:active {
+            cursor: grabbing;
+        }
+
+        /* Clean Studio Vignette (Pure Inset Shadow - completely transparent center) */
+        .studio-vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 3;
+            box-shadow: inset 0 0 160px rgba(0, 0, 0, 0.75);
+        }
+
+        /* Header: Strictly BookBridge - Online Book Exchange Platform */
+        .header-container {
+            position: fixed;
+            top: 26px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            text-align: center;
+            pointer-events: none;
+            animation: fadeInDown 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .header-title {
+            font-family: 'Cinzel', serif;
+            font-size: 2.7rem;
+            font-weight: 800;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, #ffffff 15%, var(--gold-light) 60%, var(--gold-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 4px 28px rgba(0, 0, 0, 0.85);
+            margin-bottom: 3px;
+        }
+
+        .header-subtitle {
+            font-size: 0.94rem;
+            font-weight: 600;
+            letter-spacing: 3px;
+            color: var(--gold-primary);
+            text-transform: uppercase;
+            opacity: 0.95;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+        }
+
+        /* ONLY TWO BUTTONS: LOGIN AND SIGN UP */
+        .auth-actions-bar {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            gap: 22px;
+            animation: fadeInUp 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .auth-pill-btn {
+            min-width: 155px;
+            padding: 13px 35px;
+            font-family: 'Cinzel', serif;
+            font-size: 0.94rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .auth-pill-btn.primary {
+            background: linear-gradient(135deg, #e5b85c 0%, #b88228 100%);
+            color: #080a12;
+            border: none;
+            box-shadow: 0 8px 25px rgba(229, 184, 92, 0.35);
+        }
+
+        .auth-pill-btn.primary:hover {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 14px 35px rgba(229, 184, 92, 0.55);
+        }
+
+        .auth-pill-btn.secondary {
+            background: rgba(14, 19, 36, 0.75);
+            color: var(--gold-light);
+            border: 1.5px solid rgba(229, 184, 92, 0.45);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+        }
+
+        .auth-pill-btn.secondary:hover {
+            transform: translateY(-3px) scale(1.03);
+            border-color: var(--gold-primary);
+            background: rgba(229, 184, 92, 0.16);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.85);
+        }
+
+        /* Floating Close Book Button (Appears when Book is Open) */
+        .book-close-trigger {
+            position: fixed;
+            top: 28px;
+            right: 32px;
+            z-index: 30;
+            background: rgba(14, 18, 32, 0.88);
+            border: 1.5px solid rgba(229, 184, 92, 0.55);
+            color: var(--gold-light);
+            font-family: 'Cinzel', serif;
+            font-size: 0.84rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            padding: 10px 22px;
+            border-radius: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-8px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .book-close-trigger.visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .book-close-trigger:hover {
+            background: rgba(229, 184, 92, 0.24);
+            border-color: var(--gold-primary);
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 0 12px 32px rgba(229, 184, 92, 0.35);
+        }
+
+        /* Glassmorphism Modals Overlay */
+        .auth-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(3, 4, 8, 0.55);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 6%;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s ease, backdrop-filter 0.35s ease;
+        }
+
+        .auth-modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Glassmorphism Modal Card */
+        .auth-card {
+            width: 100%;
+            max-width: 390px;
+            background: var(--card-glass);
+            border: 1.5px solid var(--card-border);
+            border-radius: 22px;
+            padding: 32px 28px;
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            box-shadow: 0 35px 80px rgba(0, 0, 0, 0.9), 0 0 35px rgba(229, 184, 92, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+            transform: translateX(40px) scale(0.96);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+            position: relative;
+        }
+
+        .auth-modal-overlay.active .auth-card {
+            transform: translateX(0) scale(1);
+        }
+
+        /* Close Button */
+        .close-modal-btn {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .close-modal-btn:hover {
+            background: rgba(229, 184, 92, 0.2);
+            border-color: var(--gold-primary);
+            color: #ffffff;
+            transform: rotate(90deg);
+        }
+
+        .card-emblem {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 12px auto;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(229, 184, 92, 0.25) 0%, rgba(14, 18, 32, 0.1) 70%);
+            border: 1.5px solid var(--gold-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 18px rgba(229, 184, 92, 0.3);
+        }
+
+        .card-emblem svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--gold-primary);
+        }
+
+        .card-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.65rem;
+            font-weight: 700;
+            text-align: center;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .card-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 22px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .input-box-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-box-wrapper svg {
+            position: absolute;
+            left: 14px;
+            width: 17px;
+            height: 17px;
+            fill: var(--text-muted);
+            pointer-events: none;
+            transition: fill 0.25s ease;
+        }
+
+        .form-input {
+            width: 100%;
+            height: 44px;
+            padding: 0 40px 0 40px;
+            background: rgba(8, 11, 22, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 0.88rem;
+            outline: none;
+            transition: all 0.25s ease;
+        }
+
+        .form-input:focus {
+            border-color: var(--gold-primary);
+            background: rgba(13, 18, 36, 0.98);
+            box-shadow: 0 0 16px rgba(229, 184, 92, 0.3);
+        }
+
+        .toggle-pwd-btn {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+        }
+
+        .toggle-pwd-btn:hover {
+            color: var(--gold-primary);
+        }
+
+        .form-row-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 18px;
+            font-size: 0.78rem;
+        }
+
+        .link-text {
+            color: var(--gold-primary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .link-text:hover {
+            color: var(--gold-light);
+            text-decoration: underline;
+        }
+
+        .submit-btn {
+            width: 100%;
+            height: 44px;
+            background: linear-gradient(135deg, #e5b85c 0%, #b88228 100%);
+            border: none;
+            border-radius: 12px;
+            color: #080a12;
+            font-family: 'Cinzel', serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 8px 24px rgba(229, 184, 92, 0.3);
+            transition: all 0.25s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(229, 184, 92, 0.5);
+            filter: brightness(1.06);
+        }
+
+        .switch-prompt {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        .switch-prompt a {
+            color: var(--gold-primary);
+            font-weight: 600;
+            text-decoration: none;
+            margin-left: 5px;
+            cursor: pointer;
+        }
+
+        .switch-prompt a:hover {
+            text-decoration: underline;
+        }
+
+        /* Subtle Feedback Toast */
+        .toast-notification {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 100;
+            padding: 12px 24px;
+            border-radius: 14px;
+            background: rgba(14, 18, 32, 0.95);
+            border: 1px solid var(--gold-primary);
+            color: #ffffff;
+            font-size: 0.88rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.85);
+            transform: translateY(-30px);
+            opacity: 0;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+
+        .toast-notification.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translate(-50%, -20px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translate(-50%, 20px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+
+        @media (max-width: 900px) {
+            .auth-modal-overlay {
+                justify-content: center;
+                padding-right: 0;
+                padding: 20px;
+            }
+            .header-title {
+                font-size: 1.8rem;
+                letter-spacing: 3px;
+            }
+            .header-subtitle {
+                font-size: 0.82rem;
+            }
+            .auth-actions-bar {
+                bottom: 24px;
+                gap: 14px;
+            }
+            .auth-pill-btn {
+                min-width: 135px;
+                padding: 11px 22px;
+                font-size: 0.84rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 3D Canvas (z-index: 2, directly visible) -->
+    <canvas id="webgl-canvas"></canvas>
+
+    <!-- Studio Vignette (z-index: 3, transparent center) -->
+    <div class="studio-vignette"></div>
+
+    <!-- Header: Strictly BookBridge - Online Book Exchange Platform -->
+    <header class="header-container">
+        <h1 class="header-title">BookBridge</h1>
+        <p class="header-subtitle">Online Book Exchange Platform</p>
+    </header>
+
+    <!-- Floating Close Book Trigger -->
+    <button id="book-close-trigger" class="book-close-trigger" aria-label="Close Book">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        <span>CLOSE BOOK</span>
+    </button>
+
+    <!-- ONLY TWO BUTTONS: LOGIN AND SIGN UP -->
+    <div class="auth-actions-bar">
+        <button id="open-login-btn" class="auth-pill-btn primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/>
+            </svg>
+            Login
+        </button>
+        <button id="open-signup-btn" class="auth-pill-btn secondary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+            Sign Up
+        </button>
+    </div>
+
+    <!-- Glassmorphic Login Modal -->
+    <div id="login-modal" class="auth-modal-overlay">
+        <div class="auth-card">
+            <button class="close-modal-btn" data-close="login-modal">✕</button>
+            <div class="card-emblem">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 4.5C7 3 2.5 4.5 2 5v13.5c.5-.5 5-2 10-.5 5-1.5 9.5 0 10 .5V5c-.5-.5-5-2-10-.5zm-1 12c-4-1-7.5-.5-8 0V6.5c.5-.5 4-1 8 0v10zm10 0c-.5-.5-4-1-8 0V6.5c4-1 7.5-.5 8 0v10z"/>
+                </svg>
+            </div>
+            <h2 class="card-title">Welcome Back</h2>
+            <p class="card-subtitle">Open a new chapter and continue your journey.</p>
+            
+            <form id="login-form">
+                <div id="login-error-msg" style="color: #f87171; font-size: 0.84rem; margin-bottom: 14px; display: none; padding: 10px 14px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 10px;"></div>
+
+                <div class="form-group">
+                    <label class="form-label">Email or Username</label>
+                    <div class="input-box-wrapper">
+                        <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                        <input type="text" id="login-identifier" class="form-input" placeholder="Enter your email or username" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div class="input-box-wrapper">
+                        <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                        <input id="login-pwd-input" type="password" class="form-input" placeholder="Enter your password" required>
+                        <button type="button" class="toggle-pwd-btn" onclick="togglePasswordVisibility('login-pwd-input')">👁</button>
+                    </div>
+                </div>
+
+                <div class="form-row-actions">
+                    <a href="#" class="link-text" onclick="showToast('Password reset link sent to your registered email.'); return false;">Forgot Password?</a>
+                </div>
+
+                <button type="submit" id="login-submit-btn" class="submit-btn">Login →</button>
+
+                <p class="switch-prompt">
+                    Don't have an account? <a id="switch-to-signup">Sign Up</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Glassmorphic Signup Modal -->
+    <div id="signup-modal" class="auth-modal-overlay">
+        <div class="auth-card">
+            <button class="close-modal-btn" data-close="signup-modal">✕</button>
+            <div class="card-emblem">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 4.5C7 3 2.5 4.5 2 5v13.5c.5-.5 5-2 10-.5 5-1.5 9.5 0 10 .5V5c-.5-.5-5-2-10-.5zm-1 12c-4-1-7.5-.5-8 0V6.5c.5-.5 4-1 8 0v10zm10 0c-.5-.5-4-1-8 0V6.5c4-1 7.5-.5 8 0v10z"/>
+                </svg>
+            </div>
+            <h2 class="card-title">Create Account</h2>
+            <p class="card-subtitle">Your next reading adventure starts here.</p>
+            
+            <form id="signup-form">
+                <div id="signup-error-msg" style="color: #f87171; font-size: 0.84rem; margin-bottom: 14px; display: none; padding: 10px 14px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 10px;"></div>
+
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <div class="input-box-wrapper">
+                        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                        <input type="text" id="signup-fullname" class="form-input" placeholder="Enter your full name" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <div class="input-box-wrapper">
+                        <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                        <input type="email" id="signup-email" class="form-input" placeholder="Enter your email" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Mobile Number</label>
+                    <div class="input-box-wrapper">
+                        <svg viewBox="0 0 24 24"><path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                        <input type="tel" id="signup-mobile" class="form-input" placeholder="Enter 10-digit mobile number" maxlength="10" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div class="input-box-wrapper">
+                        <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                        <input id="signup-pwd-input" type="password" class="form-input" placeholder="Create password" required>
+                        <button type="button" class="toggle-pwd-btn" onclick="togglePasswordVisibility('signup-pwd-input')">👁</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Confirm Password</label>
+                    <div class="input-box-wrapper">
+                        <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                        <input id="signup-cpwd-input" type="password" class="form-input" placeholder="Confirm password" required>
+                    </div>
+                </div>
+
+                <button type="submit" id="signup-submit-btn" class="submit-btn">Create Account →</button>
+
+                <p class="switch-prompt">
+                    Already have an account? <a id="switch-to-login">Login</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notification">
+        <span style="color: var(--gold-primary); font-size: 1.2rem;">✦</span>
+        <span id="toast-message">Action successful</span>
+    </div>
+
+    <!-- Three.js CDN with Automatic Fallbacks -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        if (typeof THREE === 'undefined') {
+            document.write('<script src="https://unpkg.com/three@0.128.0/build/three.min.js"><' + '/script>');
+        }
+    </script>
+    <script>
+        if (typeof THREE === 'undefined') {
+            document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><' + '/script>');
+        }
+    </script>
+
+    <script>
+        /* -------------------------------------------------------------
+           EDITORIAL CHAPTER SPREADS (OPEN SPREAD CONTENT)
+        ------------------------------------------------------------- */
+        const BOOK_SPREADS = [
+            {
+                chapterNumber: 1,
+                left: {
+                    heading: "BOOKBRIDGE",
+                    sub: "THE ART OF SHARING STORIES",
+                    pictureType: "reading",
+                    caption: "“Every shared book creates an enduring bridge between two curious minds.”",
+                    pageNumber: 1
+                },
+                right: {
+                    heading: "THE NEXT CHAPTER",
+                    dropCap: "E",
+                    lead: "very book on your personal shelf contains an entire world waiting to be rediscovered by another passionate reader.",
+                    paragraphs: [
+                        "BookBridge turns private bookshelves into a dynamic, interconnected community.",
+                        "Lend with confidence. Borrow with curiosity. Connect with fellow readers across neighborhoods and cities.",
+                        "Here, great stories never gather dust; they circulate, inspire, and spark meaningful conversations."
+                    ],
+                    quote: "“Open a book. Discover a story. Exchange knowledge.”",
+                    pageNumber: 2
+                }
+            },
+            {
+                chapterNumber: 2,
+                left: {
+                    heading: "A GAME OF THRONES",
+                    sub: "FOLIO II • GEORGE R.R. MARTIN",
+                    pictureType: "coffee",
+                    caption: "“When you play the game of thrones, you win or you die. There is no middle ground.”",
+                    pageNumber: 3
+                },
+                right: {
+                    heading: "WINTER IS COMING",
+                    dropCap: "M",
+                    lead: "any years ago, in the ancient high towers of Winterfell, the legendary saga of honor, treachery, and dragons took flight.",
+                    paragraphs: [
+                        "Across the seven kingdoms of Westeros, noble houses vie for the Iron Throne while ancient perils stir beyond the Wall of ice.",
+                        "Now in circulation on BookBridge for readers seeking one of modern fantasy's defining masterworks.",
+                        "Lend your copy, borrow from nearby members, and discover why this chronicle captivated millions."
+                    ],
+                    quote: "“A reader lives a thousand lives before he dies. The man who never reads lives only one.”",
+                    pageNumber: 4
+                }
+            },
+            {
+                chapterNumber: 3,
+                left: {
+                    heading: "A CLASH OF KINGS",
+                    sub: "FOLIO III • WAR OF THE KINGS",
+                    pictureType: "bookshelf",
+                    caption: "“Power resides where men believe it resides. No more and no less.”",
+                    pageNumber: 5
+                },
+                right: {
+                    heading: "THE CROWNED SHADOWS",
+                    dropCap: "F",
+                    lead: "ive rival monarchs contest for an embattled realm as black sails approach Blackwater Bay under a burning red comet.",
+                    paragraphs: [
+                        "The second volume of the epic elevates political intrigue, naval warfare, and ancient sorcery to extraordinary heights.",
+                        "Connect with readers who appreciate deep tactical narrative, morally grey heroes, and grand world-building.",
+                        "Easily request this volume on BookBridge or list your own edition for fellow book lovers."
+                    ],
+                    quote: "“There are no true knights, no more than there are gods. Protect what you love.”",
+                    pageNumber: 6
+                }
+            },
+            {
+                chapterNumber: 4,
+                left: {
+                    heading: "A STORM OF SWORDS",
+                    sub: "FOLIO IV • STEEL AND EMBER",
+                    pictureType: "reading",
+                    caption: "“The storms come and go, and the big fish eat the little fish, and I keep on paddling.”",
+                    pageNumber: 7
+                },
+                right: {
+                    heading: "TIDES OF DESTINY",
+                    dropCap: "T",
+                    lead: "he grand conflict reaches a thunderous crescendo in what critics acclaim as one of the greatest fantasy novels ever written.",
+                    paragraphs: [
+                        "From unforgettable court dramas to sweeping northern battles, loyalties shatter and legends are forged in flame and frost.",
+                        "Community members on BookBridge have placed collector's hardcovers into active neighborhood exchange.",
+                        "Share your insights, lend your volumes, and pass the torch of reading forward."
+                    ],
+                    quote: "“Some old wounds never truly heal, and bleed again at the slightest word.”",
+                    pageNumber: 8
+                }
+            },
+            {
+                chapterNumber: 5,
+                left: {
+                    heading: "A SONG OF ICE AND FIRE",
+                    sub: "FOLIO V • THE COMPLETE CHRONICLES",
+                    pictureType: "coffee",
+                    caption: "“Fire cannot kill a dragon. Words are wind, but stories endure forever.”",
+                    pageNumber: 9
+                },
+                right: {
+                    heading: "THE LIVING EPIC",
+                    dropCap: "G",
+                    lead: "eorge R.R. Martin's magnum opus explores the human heart in eternal conflict with itself, power, love, and destiny.",
+                    paragraphs: [
+                        "Spanning continents from the freezing lands of always winter to the exotic free cities across the narrow sea.",
+                        "Multiple editions are currently available across BookBridge's active lender network.",
+                        "Borrow the complete saga or trade individual volumes with verified local bibliophiles."
+                    ],
+                    quote: "“A mind needs books as a sword needs a whetstone, if it is to keep its edge.”",
+                    pageNumber: 10
+                }
+            },
+            {
+                chapterNumber: 6,
+                left: {
+                    heading: "THE WINDS OF WINTER",
+                    sub: "FOLIO VI • WINGS OF WINTER",
+                    pictureType: "bookshelf",
+                    caption: "“The wind was gusting, cold as the breath of the legendary ice dragons of old.”",
+                    pageNumber: 11
+                },
+                right: {
+                    heading: "THE FROZEN HORIZON",
+                    dropCap: "N",
+                    lead: "ight settles across the realm as long-awaited battles and ancient mysteries converge in the ultimate icy confrontation.",
+                    paragraphs: [
+                        "Community theory companion guides, graphic novels, and prequel volumes are actively traded on BookBridge.",
+                        "Connect with readers anticipating the future chapters of the world's most talked-about saga.",
+                        "Winter is coming, but great stories keep minds enlightened through every season."
+                    ],
+                    quote: "“Winter is coming, but through books, spring lives eternal in our minds.”",
+                    pageNumber: 12
+                }
+            }
+        ];
+
+        function getSpreadContent(spreadIndex) {
+            const baseIndex = spreadIndex % BOOK_SPREADS.length;
+            const cycle = Math.floor(spreadIndex / BOOK_SPREADS.length);
+            const base = BOOK_SPREADS[baseIndex];
+
+            const leftPageNum = (spreadIndex * 2) + 1;
+            const rightPageNum = (spreadIndex * 2) + 2;
+
+            if (cycle === 0) {
+                return {
+                    ...base,
+                    left: { ...base.left, pageNumber: leftPageNum },
+                    right: { ...base.right, pageNumber: rightPageNum }
+                };
+            }
+
+            return {
+                chapterNumber: spreadIndex + 1,
+                left: {
+                    heading: `COLLECTION VOL. ${cycle + 1}`,
+                    sub: `MANUSCRIPT FOLIO ${spreadIndex + 1}`,
+                    pictureType: base.left.pictureType,
+                    caption: `“Sharing knowledge across ${spreadIndex * 150 + 200} curious readers.”`,
+                    pageNumber: leftPageNum
+                },
+                right: {
+                    heading: `CHAPTER ${spreadIndex + 1} • THE HORIZON`,
+                    dropCap: base.right.dropCap,
+                    lead: base.right.lead,
+                    paragraphs: base.right.paragraphs,
+                    quote: base.right.quote,
+                    pageNumber: rightPageNum
+                }
+            };
+        }
+
+        /* -------------------------------------------------------------
+           MODERN EDITORIAL ART CARDS (HIGH RESOLUTION & CRISP)
+        ------------------------------------------------------------- */
+        function drawEditorialArtwork(ctx, type, cx, cy, w, h) {
+            ctx.save();
+            ctx.translate(cx, cy);
+
+            const cardW = w;
+            const cardH = h;
+            const radius = 20;
+
+            // Background card container
+            ctx.fillStyle = '#111827';
+            ctx.beginPath();
+            ctx.roundRect(-cardW/2, -cardH/2, cardW, cardH, radius);
+            ctx.fill();
+
+            // Elegant gold trim border
+            ctx.strokeStyle = '#e5b85c';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.roundRect(-cardW/2 + 10, -cardH/2 + 10, cardW - 20, cardH - 20, radius - 6);
+            ctx.stroke();
+
+            if (type === 'reading') {
+                // Open Book with Architectural Arches
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(-cardW/2 + 12, -cardH/2 + 12, cardW - 24, cardH - 24);
+
+                // Minimalist open book
+                ctx.strokeStyle = '#e5b85c';
+                ctx.lineWidth = 6;
+                ctx.beginPath();
+                ctx.moveTo(0, 140);
+                ctx.bezierCurveTo(120, 60, 260, 120, 300, 130);
+                ctx.lineTo(300, -80);
+                ctx.bezierCurveTo(260, -90, 120, -150, 0, -80);
+                ctx.bezierCurveTo(-120, -150, -260, -90, -300, -80);
+                ctx.lineTo(-300, 130);
+                ctx.bezierCurveTo(-260, 120, -120, 60, 0, 140);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(0, -80);
+                ctx.lineTo(0, 140);
+                ctx.stroke();
+
+                // Subtle radiating lines
+                ctx.strokeStyle = 'rgba(229, 184, 92, 0.4)';
+                ctx.lineWidth = 3;
+                for (let a = -0.8; a <= 0.8; a += 0.4) {
+                    ctx.beginPath();
+                    ctx.moveTo(Math.sin(a) * 40, -100 - Math.cos(a) * 40);
+                    ctx.lineTo(Math.sin(a) * 160, -100 - Math.cos(a) * 160);
+                    ctx.stroke();
+                }
+            } else if (type === 'coffee') {
+                // Stack of volumes
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(-cardW/2 + 12, -cardH/2 + 12, cardW - 24, cardH - 24);
+
+                ctx.fillStyle = '#334155';
+                ctx.fillRect(-220, 60, 440, 50);
+                ctx.fillStyle = '#e5b85c';
+                ctx.fillRect(-220, 60, 40, 50);
+
+                ctx.fillStyle = '#475569';
+                ctx.fillRect(-200, 0, 400, 50);
+                ctx.fillStyle = '#d97706';
+                ctx.fillRect(-200, 0, 40, 50);
+
+                ctx.fillStyle = '#64748b';
+                ctx.fillRect(-180, -60, 360, 50);
+                ctx.fillStyle = '#fde68a';
+                ctx.fillRect(-180, -60, 40, 50);
+            } else {
+                // Sleek Bookshelf Row
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(-cardW/2 + 12, -cardH/2 + 12, cardW - 24, cardH - 24);
+
+                ctx.fillStyle = '#e5b85c';
+                ctx.fillRect(-280, 80, 560, 16);
+
+                const colors = ['#38bdf8', '#fbbf24', '#a855f7', '#34d399', '#f87171', '#60a5fa'];
+                let bx = -250;
+                for (let i = 0; i < 7; i++) {
+                    const bw = 55;
+                    const bh = 180 + (Math.sin(i) * 30);
+                    ctx.fillStyle = colors[i % colors.length];
+                    ctx.fillRect(bx, 80 - bh, bw, bh);
+
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                    ctx.fillRect(bx + 8, 80 - bh + 25, bw - 16, 40);
+
+                    bx += 72;
+                }
+            }
+
+            ctx.restore();
+        }
+
+        /* -------------------------------------------------------------
+           2048x2880 ULTRA-CRISP HIGH-CONTRAST EDITORIAL PAGE TEXTURES
+        ------------------------------------------------------------- */
+        function createHighResPageTexture(canvas) {
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.generateMipmaps = false; // Prevents texture downscaling / mipmap blur!
+            tex.minFilter = THREE.LinearFilter;
+            tex.magFilter = THREE.LinearFilter;
+            tex.needsUpdate = true;
+            return tex;
+        }
+
+        function renderLeftPageCanvas(leftData) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 2048;
+            canvas.height = 2880;
+            const ctx = canvas.getContext('2d');
+
+            // High-Contrast Clean Ivory/Parchment Paper
+            const pageGrad = ctx.createLinearGradient(0, 0, 2048, 2880);
+            pageGrad.addColorStop(0, '#ffffff');
+            pageGrad.addColorStop(0.4, '#faf7f0');
+            pageGrad.addColorStop(1, '#f4eee2');
+            ctx.fillStyle = pageGrad;
+            ctx.fillRect(0, 0, 2048, 2880);
+
+            // Subtle Spine Crease Shadow
+            const spineShadow = ctx.createLinearGradient(2048, 0, 1920, 0);
+            spineShadow.addColorStop(0, 'rgba(0, 0, 0, 0.16)');
+            spineShadow.addColorStop(1, 'transparent');
+            ctx.fillStyle = spineShadow;
+            ctx.fillRect(1920, 0, 128, 2880);
+
+            // Double Frame in Pure Solid Black
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 6;
+            ctx.strokeRect(100, 100, 1848, 2680);
+
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2.5;
+            ctx.strokeRect(122, 122, 1804, 2636);
+
+            // Top Header: DEEP HEAVY BLACK ANCIENT ANTIQUE FONT
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#000000';
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 3.2;
+            ctx.font = '900 76px "Cinzel Decorative", "Cinzel", serif';
+            ctx.letterSpacing = '8px';
+            ctx.fillText(leftData.heading, 1024, 340);
+            ctx.strokeText(leftData.heading, 1024, 340);
+
+            ctx.fillStyle = '#000000';
+            ctx.lineWidth = 2;
+            ctx.font = 'italic 800 50px "EB Garamond", "Playfair Display", serif';
+            ctx.letterSpacing = '5px';
+            ctx.fillText(leftData.sub, 1024, 435);
+            ctx.strokeText(leftData.sub, 1024, 435);
+
+            // Heavy Solid Black Divider
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(650, 490);
+            ctx.lineTo(950, 490);
+            ctx.moveTo(1098, 490);
+            ctx.lineTo(1398, 490);
+            ctx.stroke();
+
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(1024, 490, 9, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Center Artwork Card
+            drawEditorialArtwork(ctx, leftData.pictureType, 1024, 1330, 1340, 1380);
+
+            // Caption under picture: HEAVY PURE BLACK ANCIENT ANTIQUE SERIF
+            ctx.fillStyle = '#000000';
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2.4;
+            ctx.font = 'italic 800 72px "EB Garamond", "Playfair Display", serif';
+            ctx.textAlign = 'center';
+            
+            const captionWords = leftData.caption.split(' ');
+            let line1 = '';
+            let line2 = '';
+            for (let i = 0; i < captionWords.length; i++) {
+                if (i < Math.ceil(captionWords.length / 2)) line1 += captionWords[i] + ' ';
+                else line2 += captionWords[i] + ' ';
+            }
+            ctx.fillText(line1.trim(), 1024, 2210);
+            ctx.strokeText(line1.trim(), 1024, 2210);
+            if (line2) {
+                ctx.fillText(line2.trim(), 1024, 2300);
+                ctx.strokeText(line2.trim(), 1024, 2300);
+            }
+
+            // Intuitive Reading Guide in Heavy Black
+            ctx.fillStyle = '#000000';
+            ctx.lineWidth = 1.4;
+            ctx.font = '800 46px "EB Garamond", serif';
+            ctx.fillText('◀  Click Left Page or Spine to Close / Go Back  •  Click Right Page to Turn Forward  ▶', 1024, 2465);
+            ctx.strokeText('◀  Click Left Page or Spine to Close / Go Back  •  Click Right Page to Turn Forward  ▶', 1024, 2465);
+
+            // Bottom Page Number in Heavy Black
+            ctx.fillStyle = '#000000';
+            ctx.lineWidth = 2;
+            ctx.font = '800 52px "Cinzel", serif';
+            ctx.fillText(`—  PAGE ${leftData.pageNumber}  —`, 1024, 2635);
+            ctx.strokeText(`—  PAGE ${leftData.pageNumber}  —`, 1024, 2635);
+
+            return createHighResPageTexture(canvas);
+        }
+
+        function renderRightPageCanvas(rightData) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 2048;
+            canvas.height = 2880;
+            const ctx = canvas.getContext('2d');
+
+            // High-Contrast Clean Ivory/Parchment Paper
+            const pageGrad = ctx.createLinearGradient(0, 0, 2048, 2880);
+            pageGrad.addColorStop(0, '#ffffff');
+            pageGrad.addColorStop(0.4, '#faf7f0');
+            pageGrad.addColorStop(1, '#f4eee2');
+            ctx.fillStyle = pageGrad;
+            ctx.fillRect(0, 0, 2048, 2880);
+
+            // Left spine shadow crease
+            const spineShadow = ctx.createLinearGradient(0, 0, 128, 0);
+            spineShadow.addColorStop(0, 'rgba(0, 0, 0, 0.16)');
+            spineShadow.addColorStop(1, 'transparent');
+            ctx.fillStyle = spineShadow;
+            ctx.fillRect(0, 0, 128, 2880);
+
+            // Double Frame in Pure Solid Black
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 6;
+            ctx.strokeRect(100, 100, 1848, 2680);
+
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2.5;
+            ctx.strokeRect(122, 122, 1804, 2636);
+
+            // Chapter Heading: SOLID HEAVY BLACK ANCIENT ANTIQUE SERIF
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#000000';
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 3.6;
+            ctx.font = '900 86px "Cinzel Decorative", "Cinzel", serif';
+            ctx.letterSpacing = '6px';
+            ctx.fillText(rightData.heading, 1024, 350);
+            ctx.strokeText(rightData.heading, 1024, 350);
+
+            // Heavy Solid Black Divider
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(650, 415);
+            ctx.lineTo(950, 415);
+            ctx.moveTo(1098, 415);
+            ctx.lineTo(1398, 415);
+            ctx.stroke();
+
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(1024, 415, 9, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Big Bold Hero Quote in Heavy Black Antique Italic
+            ctx.fillStyle = '#000000';
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2.6;
+            ctx.font = 'italic 800 88px "EB Garamond", "Playfair Display", serif';
+            ctx.fillText(rightData.quote, 1024, 590);
+            ctx.strokeText(rightData.quote, 1024, 590);
+
+            // Drop Cap & Lead Paragraph
+            ctx.textAlign = 'left';
+
+            // Massive Antique Drop Cap in Pitch Black with Double Stroke
+            ctx.fillStyle = '#000000';
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 6;
+            ctx.font = '900 250px "Cinzel Decorative", "Cinzel", serif';
+            ctx.fillText(rightData.dropCap, 210, 980);
+            ctx.strokeText(rightData.dropCap, 210, 980);
+
+            function wrapText(text, x, y, maxWidth, lineHeight, font, strokeWidth = 1.8) {
+                ctx.font = font;
+                ctx.fillStyle = '#000000';
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = strokeWidth;
+                const words = text.split(' ');
+                let line = '';
+                let currentY = y;
+                for (let n = 0; n < words.length; n++) {
+                    const testLine = line + words[n] + ' ';
+                    const metrics = ctx.measureText(testLine);
+                    if (metrics.width > maxWidth && n > 0) {
+                        ctx.fillText(line, x, currentY);
+                        if (strokeWidth > 0) ctx.strokeText(line, x, currentY);
+                        line = words[n] + ' ';
+                        currentY += lineHeight;
+                    } else {
+                        line = testLine;
+                    }
+                }
+                ctx.fillText(line, x, currentY);
+                if (strokeWidth > 0) ctx.strokeText(line, x, currentY);
+                return currentY + lineHeight;
+            }
+
+            // Lead text next to Drop Cap in Heavy Black Antique Serif
+            let startY = 820;
+            startY = wrapText(rightData.lead, 440, startY, 1360, 88, 'italic 800 72px "EB Garamond", "Playfair Display", serif', 2.0);
+
+            // Body Paragraphs in Deep Heavy Black with Antique Serif
+            let pY = Math.max(1110, startY + 45);
+            for (const para of rightData.paragraphs) {
+                pY = wrapText(para, 220, pY, 1580, 88, '700 66px "EB Garamond", "Playfair Display", serif', 1.8);
+                pY += 38;
+            }
+
+            // Bottom Heavy Antique Flourish
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(830, 2520);
+            ctx.lineTo(1218, 2520);
+            ctx.stroke();
+
+            // Bottom Page Number in Heavy Black
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#000000';
+            ctx.lineWidth = 2;
+            ctx.font = '800 52px "Cinzel", serif';
+            ctx.fillText(`—  PAGE ${rightData.pageNumber}  —`, 1024, 2635);
+            ctx.strokeText(`—  PAGE ${rightData.pageNumber}  —`, 1024, 2635);
+
+            return createHighResPageTexture(canvas);
+        }
+
+        /* -------------------------------------------------------------
+           REFERENCE DESIGN: LUXURY COLLECTOR'S HARDCOVER
+           (Rich Warm Brown Leather, Embossed Gold Borders & Centerpiece)
+        ------------------------------------------------------------- */
+        function createCollectorHardcoverTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 2048;
+            canvas.height = 2880;
+            const ctx = canvas.getContext('2d');
+
+            // Rich Dark Brown / Warm Antique Leather-like Cover (matching reference)
+            const grad = ctx.createLinearGradient(0, 0, 2048, 2880);
+            grad.addColorStop(0, '#1c1109');
+            grad.addColorStop(0.3, '#2a190e');
+            grad.addColorStop(0.7, '#20130a');
+            grad.addColorStop(1, '#150c06');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 2048, 2880);
+
+            // Subtle fine leather grain texture
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.018)';
+            for (let i = 0; i < 60000; i++) {
+                ctx.fillRect(Math.random() * 2048, Math.random() * 2880, 2, 2);
+            }
+
+            // Ornate Golden Decorative Borders (Double Frame)
+            ctx.strokeStyle = '#e5b85c';
+            ctx.lineWidth = 14;
+            ctx.strokeRect(90, 90, 1868, 2700);
+
+            ctx.strokeStyle = '#8c5520';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(122, 122, 1804, 2636);
+
+            ctx.strokeStyle = '#fef1cf';
+            ctx.lineWidth = 2.5;
+            ctx.strokeRect(140, 140, 1768, 2600);
+
+            // Raised Golden Corner Ornaments
+            function drawCornerOrnament(x, y, angle) {
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(angle);
+                ctx.strokeStyle = '#e5b85c';
+                ctx.lineWidth = 8;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(110, 0);
+                ctx.arc(110, 110, 110, -Math.PI/2, Math.PI, true);
+                ctx.stroke();
+
+                ctx.fillStyle = '#e5b85c';
+                ctx.beginPath();
+                ctx.arc(55, 55, 12, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+            drawCornerOrnament(140, 140, 0);
+            drawCornerOrnament(1908, 140, Math.PI/2);
+            drawCornerOrnament(1908, 2740, Math.PI);
+            drawCornerOrnament(140, 2740, -Math.PI/2);
+
+            // Large Circular Decorative Centerpiece (Matching Reference Image)
+            ctx.save();
+            ctx.translate(1024, 950);
+
+            // Glowing Golden Centerpiece Halo
+            const halo = ctx.createRadialGradient(0, 0, 20, 0, 0, 280);
+            halo.addColorStop(0, 'rgba(245, 200, 95, 0.45)');
+            halo.addColorStop(0.5, 'rgba(217, 130, 30, 0.18)');
+            halo.addColorStop(1, 'transparent');
+            ctx.fillStyle = halo;
+            ctx.beginPath();
+            ctx.arc(0, 0, 280, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Concentric Gold Filigree Rings
+            ctx.strokeStyle = '#e5b85c';
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.arc(0, 0, 190, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#a67324';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(0, 0, 160, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#fef1cf';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(0, 0, 130, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Sunburst / Astrolabe Rays in Centerpiece
+            for (let i = 0; i < 24; i++) {
+                const angle = (i * Math.PI * 2) / 24;
+                ctx.strokeStyle = (i % 2 === 0) ? '#e5b85c' : '#fef1cf';
+                ctx.lineWidth = (i % 2 === 0) ? 5 : 2.5;
+                ctx.beginPath();
+                ctx.moveTo(Math.cos(angle) * 70, Math.sin(angle) * 70);
+                ctx.lineTo(Math.cos(angle) * 125, Math.sin(angle) * 125);
+                ctx.stroke();
+            }
+
+            // Center Open Book Emblem in 24K Gold
+            ctx.fillStyle = '#e5b85c';
+            ctx.beginPath();
+            ctx.moveTo(0, -35);
+            ctx.bezierCurveTo(45, -60, 90, -40, 95, -35);
+            ctx.lineTo(95, 45);
+            ctx.bezierCurveTo(90, 40, 45, 20, 0, 45);
+            ctx.bezierCurveTo(-45, 20, -90, 40, -95, 45);
+            ctx.lineTo(-95, -35);
+            ctx.bezierCurveTo(-90, -40, -45, -60, 0, -35);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = '#8c5520';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(0, -35);
+            ctx.lineTo(0, 45);
+            ctx.stroke();
+            ctx.restore();
+
+            // Book Title: BookBridge in Elegant Gold Typography
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '800 170px "Cinzel", serif';
+            ctx.shadowColor = 'rgba(229, 184, 92, 0.75)';
+            ctx.shadowBlur = 40;
+            ctx.fillText('BookBridge', 1024, 1500);
+
+            // Subtitle: Exchange • Discover • Read
+            const goldTextGrad = ctx.createLinearGradient(350, 1620, 1698, 1620);
+            goldTextGrad.addColorStop(0, '#e5b85c');
+            goldTextGrad.addColorStop(0.5, '#fef1cf');
+            goldTextGrad.addColorStop(1, '#c28828');
+            ctx.fillStyle = goldTextGrad;
+            ctx.shadowBlur = 18;
+            ctx.font = '700 54px "Cinzel", serif';
+            ctx.letterSpacing = '14px';
+            ctx.fillText('EXCHANGE  •  DISCOVER  •  READ', 1024, 1660);
+
+            // Decorative Divider Line
+            ctx.strokeStyle = '#e5b85c';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(600, 1780);
+            ctx.lineTo(950, 1780);
+            ctx.moveTo(1098, 1780);
+            ctx.lineTo(1448, 1780);
+            ctx.stroke();
+
+            ctx.fillStyle = '#e5b85c';
+            ctx.beginPath();
+            ctx.arc(1024, 1780, 10, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Footnote Title
+            ctx.fillStyle = 'rgba(254, 241, 207, 0.85)';
+            ctx.font = '500 44px "Plus Jakarta Sans", sans-serif';
+            ctx.shadowBlur = 0;
+            ctx.fillText('Online Book Exchange Platform', 1024, 2480);
+
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createInsideCoverTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 2048;
+            canvas.height = 2880;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = '#140c06';
+            ctx.fillRect(0, 0, 2048, 2880);
+
+            ctx.strokeStyle = 'rgba(229, 184, 92, 0.22)';
+            ctx.lineWidth = 3;
+            for (let i = 0; i < 300; i++) {
+                ctx.beginPath();
+                ctx.arc(1024 + (Math.sin(i) * 700), i * 10, 160 + (i % 40), 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            ctx.strokeStyle = 'rgba(229, 184, 92, 0.4)';
+            ctx.lineWidth = 5;
+            ctx.strokeRect(160, 160, 1728, 2560);
+
+            ctx.fillStyle = 'rgba(229, 184, 92, 0.9)';
+            ctx.font = '700 64px "Cinzel", serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('EX LIBRIS', 1024, 1200);
+
+            ctx.font = '500 48px "Plus Jakarta Sans", sans-serif';
+            ctx.fillStyle = '#cbd5e1';
+            ctx.fillText('This volume belongs to the shared world.', 1024, 1310);
+
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createGoldenBrownPageEdges() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 1024;
+            const ctx = canvas.getContext('2d');
+
+            // Realistic Golden-Brown Gilded Page Block
+            const grad = ctx.createLinearGradient(0, 0, 256, 1024);
+            grad.addColorStop(0, '#e5b85c');
+            grad.addColorStop(0.3, '#fef1cf');
+            grad.addColorStop(0.7, '#b88228');
+            grad.addColorStop(1, '#7a4e18');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 256, 1024);
+
+            // Visible Page Edge Striations
+            ctx.fillStyle = 'rgba(40, 20, 8, 0.22)';
+            for (let i = 0; i < 1024; i += 3) {
+                ctx.fillRect(0, i, 256, 1.3);
+            }
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        /* -------------------------------------------------------------
+           3D SCENE SETUP & SCALED HERO BOOK (CLOSED BY DEFAULT)
+        ------------------------------------------------------------- */
+        let scene, camera, renderer;
+        let bookGroup, coverPivot;
+        let leftPageMesh, rightPageMesh;
+        let activeFlippingSheet;
+        let particlesMesh;
+        let isBookOpen = false; // SHOW CLOSED INITIALLY AS REQUESTED
+        let isFlipping = false;
+
+        let currentSpreadIndex = 0;
+
+        let isDragging = false;
+        let pointerDownPos = { x: 0, y: 0 };
+        let previousPointerPosition = { x: 0, y: 0 };
+        let bookRotationVelocity = { x: 0, y: 0 };
+
+        // Scaled book dimensions so it doesn't cover the entire screen:
+        const bookScale = 0.82; // Comfortably sized hero element
+        const defaultBookPos = { x: 0, y: 0.08, z: 0 };
+        let targetCamZ = 4.9; // Clean perspective showing front cover, spine, page edges & bottom
+        let targetCoverRot = 0; // Starts closed
+
+        const raycaster = new THREE.Raycaster();
+        const mouseVec = new THREE.Vector2();
+
+        function init3D() {
+            const canvas = document.getElementById('webgl-canvas');
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
+            camera.position.set(0, 0.1, targetCamZ);
+            camera.lookAt(0, 0.08, 0);
+
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.35;
+
+            // Studio Lighting (Clean, warm, highlights the golden details)
+            const ambientLight = new THREE.AmbientLight(0xffeedd, 1.4);
+            scene.add(ambientLight);
+
+            // Front key light pointing directly at front cover & centerpiece
+            const keyLight = new THREE.DirectionalLight(0xfff8ee, 3.2);
+            keyLight.position.set(2.5, 4.2, 5.0);
+            keyLight.castShadow = true;
+            keyLight.shadow.mapSize.width = 1024;
+            keyLight.shadow.mapSize.height = 1024;
+            scene.add(keyLight);
+
+            // Front-facing illumination for crystal-clear cover visibility
+            const frontLight = new THREE.DirectionalLight(0xffffff, 2.0);
+            frontLight.position.set(0, 1.2, 4.5);
+            scene.add(frontLight);
+
+            // Warm rim light highlighting leather edges & gold bands
+            const rimLight = new THREE.DirectionalLight(0xe5b85c, 2.2);
+            rimLight.position.set(-3.5, 2.0, 2.5);
+            scene.add(rimLight);
+
+            // Soft Floor Shadow Plane
+            const shadowPlaneGeo = new THREE.PlaneGeometry(12, 12);
+            const shadowPlaneMat = new THREE.ShadowMaterial({ opacity: 0.45 });
+            const shadowPlane = new THREE.Mesh(shadowPlaneGeo, shadowPlaneMat);
+            shadowPlane.rotation.x = -Math.PI / 2;
+            shadowPlane.position.y = -1.55;
+            shadowPlane.receiveShadow = true;
+            scene.add(shadowPlane);
+
+            buildPhysicalCollectorBook();
+            buildSubtleParticles();
+            setupMouseInteraction();
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        /* -------------------------------------------------------------
+           BUILD 3D PHYSICAL BOOK GEOMETRY (MATCHING REFERENCE IMAGE)
+        ------------------------------------------------------------- */
+        function buildPhysicalCollectorBook() {
+            bookGroup = new THREE.Group();
+            bookGroup.position.set(defaultBookPos.x, defaultBookPos.y, defaultBookPos.z);
+            bookGroup.scale.set(bookScale, bookScale, bookScale);
+
+            // Proportions matching the thick collector's hardcover reference:
+            const bookWidth = 1.68;
+            const bookHeight = 2.34;
+            const bookDepth = 0.32; // Thick square-bound hardcover
+            const coverThick = 0.042; // Thick front & bottom covers
+
+            const coverExtMat = new THREE.MeshStandardMaterial({
+                map: createCollectorHardcoverTexture(),
+                roughness: 0.32,
+                metalness: 0.25
+            });
+
+            const coverIntMat = new THREE.MeshStandardMaterial({
+                map: createInsideCoverTexture(),
+                roughness: 0.7,
+                metalness: 0.05
+            });
+
+            const spineLeatherMat = new THREE.MeshStandardMaterial({
+                color: 0x180f08,
+                roughness: 0.38,
+                metalness: 0.2
+            });
+
+            const goldenPageEdgesMat = new THREE.MeshStandardMaterial({
+                map: createGoldenBrownPageEdges(),
+                roughness: 0.35,
+                metalness: 0.72
+            });
+
+            // 1. Thick Bottom Cover
+            const backCoverGeo = new THREE.BoxGeometry(bookWidth, bookHeight, coverThick);
+            const backCoverMesh = new THREE.Mesh(backCoverGeo, [
+                spineLeatherMat, spineLeatherMat, spineLeatherMat, spineLeatherMat, coverIntMat, coverExtMat
+            ]);
+            backCoverMesh.position.set(bookWidth / 2, 0, -bookDepth / 2);
+            backCoverMesh.castShadow = true;
+            backCoverMesh.receiveShadow = true;
+            bookGroup.add(backCoverMesh);
+
+            // 2. Detailed Spine with Decorative Golden Bands
+            const spineGeo = new THREE.CylinderGeometry(bookDepth / 2, bookDepth / 2, bookHeight, 24, 1, false, Math.PI / 2, Math.PI);
+            const spineMesh = new THREE.Mesh(spineGeo, spineLeatherMat);
+            spineMesh.rotation.y = Math.PI / 2;
+            spineMesh.position.set(0, 0, 0);
+            spineMesh.castShadow = true;
+            bookGroup.add(spineMesh);
+
+            // Add 5 Horizontal Raised Gold Bands on the Spine (Matching Collector's Edition)
+            for (let b = -0.8; b <= 0.8; b += 0.4) {
+                const bandGeo = new THREE.CylinderGeometry(bookDepth / 2 + 0.015, bookDepth / 2 + 0.015, 0.04, 24, 1, false, Math.PI / 2, Math.PI);
+                const bandMat = new THREE.MeshStandardMaterial({ color: 0xe5b85c, metalness: 0.8, roughness: 0.3 });
+                const bandMesh = new THREE.Mesh(bandGeo, bandMat);
+                bandMesh.rotation.y = Math.PI / 2;
+                bandMesh.position.set(0, b, 0);
+                bookGroup.add(bandMesh);
+            }
+
+            // 3. Thick Front Cover Pivot (Hinged at x=0)
+            coverPivot = new THREE.Group();
+            coverPivot.position.set(0, 0, bookDepth / 2);
+
+            const frontCoverGeo = new THREE.BoxGeometry(bookWidth, bookHeight, coverThick);
+            const frontCoverMesh = new THREE.Mesh(frontCoverGeo, [
+                spineLeatherMat, spineLeatherMat, spineLeatherMat, spineLeatherMat, coverExtMat, coverIntMat
+            ]);
+            frontCoverMesh.position.set(bookWidth / 2, 0, 0);
+            frontCoverMesh.castShadow = true;
+            frontCoverMesh.receiveShadow = true;
+            coverPivot.add(frontCoverMesh);
+
+            // Starts CLOSED:
+            coverPivot.rotation.y = 0;
+            bookGroup.add(coverPivot);
+
+            // 4. Initial Spread Content (Spread 0)
+            const initialSpread = getSpreadContent(0);
+
+            const sheetWidth = bookWidth - 0.06;
+            const sheetHeight = bookHeight - 0.08;
+            const sheetDepth = 0.012;
+
+            // 5. Right Page Mesh
+            const rightPageGeo = new THREE.BoxGeometry(sheetWidth, sheetHeight, sheetDepth);
+            const rightPageMat = new THREE.MeshStandardMaterial({
+                map: renderRightPageCanvas(initialSpread.right),
+                roughness: 0.98,
+                metalness: 0.0
+            });
+            rightPageMesh = new THREE.Mesh(rightPageGeo, [
+                goldenPageEdgesMat, goldenPageEdgesMat, goldenPageEdgesMat, goldenPageEdgesMat, rightPageMat, goldenPageEdgesMat
+            ]);
+            rightPageMesh.position.set(sheetWidth / 2 + 0.02, 0, 0.02);
+            rightPageMesh.castShadow = true;
+            rightPageMesh.receiveShadow = true;
+            bookGroup.add(rightPageMesh);
+
+            // 6. Left Page Mesh (Hidden while closed, reveals when opened)
+            const leftPageGeo = new THREE.BoxGeometry(sheetWidth, sheetHeight, sheetDepth);
+            const leftPageMat = new THREE.MeshStandardMaterial({
+                map: renderLeftPageCanvas(initialSpread.left),
+                roughness: 0.98,
+                metalness: 0.0
+            });
+            leftPageMesh = new THREE.Mesh(leftPageGeo, [
+                goldenPageEdgesMat, goldenPageEdgesMat, goldenPageEdgesMat, goldenPageEdgesMat, leftPageMat, goldenPageEdgesMat
+            ]);
+            leftPageMesh.position.set(-sheetWidth / 2 - 0.02, 0, 0.02);
+            leftPageMesh.castShadow = true;
+            leftPageMesh.receiveShadow = true;
+            leftPageMesh.visible = false;
+            bookGroup.add(leftPageMesh);
+
+            // 7. Dynamic Turning Sheet
+            const flipPivot = new THREE.Group();
+            flipPivot.position.set(0.01, 0, 0.04);
+
+            const flipGeo = new THREE.BoxGeometry(sheetWidth, sheetHeight, 0.006);
+            const flipFrontMat = new THREE.MeshStandardMaterial({ map: renderRightPageCanvas(initialSpread.right), roughness: 0.98, metalness: 0.0 });
+            const flipBackMat = new THREE.MeshStandardMaterial({ map: renderLeftPageCanvas(initialSpread.left), roughness: 0.98, metalness: 0.0 });
+
+            const flipMesh = new THREE.Mesh(flipGeo, [
+                goldenPageEdgesMat, goldenPageEdgesMat, goldenPageEdgesMat, goldenPageEdgesMat, flipFrontMat, flipBackMat
+            ]);
+            flipMesh.position.set(sheetWidth / 2, 0, 0);
+            flipMesh.castShadow = true;
+            flipPivot.add(flipMesh);
+            flipPivot.visible = false;
+
+            bookGroup.add(flipPivot);
+            activeFlippingSheet = {
+                pivot: flipPivot,
+                mesh: flipMesh,
+                frontMat: flipFrontMat,
+                backMat: flipBackMat
+            };
+
+            // INITIAL PERSPECTIVE ANGLE (Matching reference image: front cover, spine, golden edges & bottom cover all visible):
+            bookGroup.rotation.set(0.24, -0.45, -0.06);
+            scene.add(bookGroup);
+        }
+
+        /* -------------------------------------------------------------
+           SUBTLE FLOATING DUST PARTICLES
+        ------------------------------------------------------------- */
+        function buildSubtleParticles() {
+            const count = 90;
+            const geo = new THREE.BufferGeometry();
+            const positions = new Float32Array(count * 3);
+
+            for (let i = 0; i < count; i++) {
+                positions[i * 3] = (Math.random() - 0.5) * 6;
+                positions[i * 3 + 1] = (Math.random() - 0.5) * 4 + 0.2;
+                positions[i * 3 + 2] = (Math.random() - 0.5) * 4;
+            }
+
+            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const pCanvas = document.createElement('canvas');
+            pCanvas.width = 64;
+            pCanvas.height = 64;
+            const pCtx = pCanvas.getContext('2d');
+            const pGrad = pCtx.createRadialGradient(32, 32, 0, 32, 32, 30);
+            pGrad.addColorStop(0, 'rgba(245, 215, 140, 0.8)');
+            pGrad.addColorStop(0.5, 'rgba(200, 140, 60, 0.35)');
+            pGrad.addColorStop(1, 'transparent');
+            pCtx.fillStyle = pGrad;
+            pCtx.beginPath();
+            pCtx.arc(32, 32, 30, 0, Math.PI * 2);
+            pCtx.fill();
+
+            const pMat = new THREE.PointsMaterial({
+                size: 0.08,
+                map: new THREE.CanvasTexture(pCanvas),
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            particlesMesh = new THREE.Points(geo, pMat);
+            scene.add(particlesMesh);
+        }
+
+        /* -------------------------------------------------------------
+           INTERACTION: ROTATION, OPENING & PAGE TURNING
+        ------------------------------------------------------------- */
+        let targetBookRot = { x: 0.24, y: -0.45, z: -0.06 };
+        let isAligningToTarget = true;
+
+        function setupMouseInteraction() {
+            const canvas = document.getElementById('webgl-canvas');
+
+            const onPointerDown = (clientX, clientY) => {
+                isDragging = true;
+                isAligningToTarget = false;
+                pointerDownPos = { x: clientX, y: clientY };
+                previousPointerPosition = { x: clientX, y: clientY };
+            };
+
+            const onPointerMove = (clientX, clientY) => {
+                mouseVec.x = (clientX / window.innerWidth) * 2 - 1;
+                mouseVec.y = -(clientY / window.innerHeight) * 2 + 1;
+
+                if (!isDragging) return;
+                const deltaX = clientX - previousPointerPosition.x;
+                const deltaY = clientY - previousPointerPosition.y;
+
+                // Rotate book with smooth physical inertia
+                bookGroup.rotation.y += deltaX * 0.007;
+                bookGroup.rotation.x += deltaY * 0.007;
+                bookGroup.rotation.x = Math.max(-0.6, Math.min(0.6, bookGroup.rotation.x));
+
+                bookRotationVelocity.x = deltaX * 0.003;
+                bookRotationVelocity.y = deltaY * 0.003;
+
+                previousPointerPosition = { x: clientX, y: clientY };
+            };
+
+            const onPointerUp = (clientX, clientY) => {
+                isDragging = false;
+                const distMoved = Math.hypot(clientX - pointerDownPos.x, clientY - pointerDownPos.y);
+
+                if (distMoved < 14) {
+                    handleBookClick();
+                }
+            };
+
+            canvas.addEventListener('mousedown', (e) => onPointerDown(e.clientX, e.clientY));
+            window.addEventListener('mousemove', (e) => onPointerMove(e.clientX, e.clientY));
+            window.addEventListener('mouseup', (e) => onPointerUp(e.clientX, e.clientY));
+
+            // Double click anywhere on canvas closes the book when open
+            canvas.addEventListener('dblclick', () => {
+                if (isBookOpen) closeBook();
+            });
+
+            // Mobile Touch Events
+            canvas.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) onPointerDown(e.touches[0].clientX, e.touches[0].clientY);
+            }, { passive: true });
+            window.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1) onPointerMove(e.touches[0].clientX, e.touches[0].clientY);
+            }, { passive: true });
+            window.addEventListener('touchend', (e) => {
+                if (e.changedTouches.length === 1) onPointerUp(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+            });
+        }
+
+        function handleBookClick() {
+            if (isFlipping) return;
+
+            raycaster.setFromCamera(mouseVec, camera);
+            const intersects = raycaster.intersectObjects(bookGroup.children, true);
+
+            if (intersects.length === 0) return;
+
+            const hit = intersects[0];
+            const localPoint = bookGroup.worldToLocal(hit.point.clone());
+
+            // 1. If book is closed -> Click anywhere opens it!
+            if (!isBookOpen) {
+                openBook();
+                return;
+            }
+
+            // 2. If book is open:
+            if (localPoint.x > 0.12) {
+                // Clicked RIGHT PAGE -> Turn next spread forward (Unlimited!)
+                turnSpreadForward();
+            } else if (localPoint.x < -0.12) {
+                // Clicked LEFT PAGE -> If at chapter 1, close book immediately! If later chapter, turn back
+                if (currentSpreadIndex === 0) {
+                    closeBook();
+                } else {
+                    turnSpreadBackward();
+                }
+            } else {
+                // Clicked Center Spine or Hinge Area -> Close book smoothly!
+                closeBook();
+            }
+        }
+
+        /* -------------------------------------------------------------
+           SMOOTH MOTION CONTROLLERS FOR BOOK OPENING & CLOSING
+        ------------------------------------------------------------- */
+        function openBook() {
+            if (isBookOpen || isFlipping) return;
+            isBookOpen = true;
+            isAligningToTarget = true;
+            targetCoverRot = -Math.PI * 0.94; // Rotates naturally around the spine
+            targetCamZ = (window.innerWidth < 900 ? 4.2 : 3.65); // Zoom closer for large, bold, crystal-clear reading
+            targetBookRot = { x: 0.06, y: 0, z: 0 };
+            bookRotationVelocity = { x: 0, y: 0 };
+
+            currentSpreadIndex = 0;
+            const currentSpread = getSpreadContent(0);
+
+            leftPageMesh.material[4].map = renderLeftPageCanvas(currentSpread.left);
+            leftPageMesh.material[4].needsUpdate = true;
+            leftPageMesh.visible = true;
+
+            rightPageMesh.material[4].map = renderRightPageCanvas(currentSpread.right);
+            rightPageMesh.material[4].needsUpdate = true;
+
+            const closeBtn = document.getElementById('book-close-trigger');
+            if (closeBtn) closeBtn.classList.add('visible');
+
+            showToast('Book opened. Click right page to turn forward, left page or spine to close.');
+        }
+
+        function closeBook() {
+            if (!isBookOpen || isFlipping) return;
+            isBookOpen = false;
+            isAligningToTarget = true;
+            targetCoverRot = 0;
+            targetCamZ = (window.innerWidth < 900 ? 5.2 : 4.9);
+            targetBookRot = { x: 0.24, y: -0.45, z: -0.06 };
+            bookRotationVelocity = { x: 0, y: 0 };
+            currentSpreadIndex = 0;
+
+            const closeBtn = document.getElementById('book-close-trigger');
+            if (closeBtn) closeBtn.classList.remove('visible');
+
+            showToast('Book closed. Click book to reopen.');
+        }
+
+        // TURN SPREAD FORWARD (UNLIMITED)
+        function turnSpreadForward() {
+            if (isFlipping) return;
+            isFlipping = true;
+
+            const nextSpreadIndex = currentSpreadIndex + 1;
+            const currentSpread = getSpreadContent(currentSpreadIndex);
+            const nextSpread = getSpreadContent(nextSpreadIndex);
+
+            activeFlippingSheet.frontMat.map = renderRightPageCanvas(currentSpread.right);
+            activeFlippingSheet.frontMat.needsUpdate = true;
+            activeFlippingSheet.backMat.map = renderLeftPageCanvas(nextSpread.left);
+            activeFlippingSheet.backMat.needsUpdate = true;
+
+            rightPageMesh.material[4].map = renderRightPageCanvas(nextSpread.right);
+            rightPageMesh.material[4].needsUpdate = true;
+
+            activeFlippingSheet.pivot.visible = true;
+            const targetRot = -Math.PI * 0.94;
+
+            const startTime = performance.now();
+            const duration = 650;
+
+            function animateFlip(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(1, elapsed / duration);
+                const ease = progress < 0.5 ? 4 * progress * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+                activeFlippingSheet.pivot.rotation.y = ease * targetRot;
+                activeFlippingSheet.pivot.rotation.z = Math.sin(progress * Math.PI) * 0.08;
+
+                if (progress < 1) {
+                    requestAnimationFrame(animateFlip);
+                } else {
+                    currentSpreadIndex = nextSpreadIndex;
+
+                    leftPageMesh.material[4].map = renderLeftPageCanvas(nextSpread.left);
+                    leftPageMesh.material[4].needsUpdate = true;
+
+                    activeFlippingSheet.pivot.visible = false;
+                    activeFlippingSheet.pivot.rotation.y = 0;
+                    activeFlippingSheet.pivot.rotation.z = 0;
+                    isFlipping = false;
+
+                    showToast(`Turned to Chapter ${nextSpread.chapterNumber}`);
+                }
+            }
+
+            requestAnimationFrame(animateFlip);
+        }
+
+        // TURN SPREAD BACKWARD (UNLIMITED)
+        function turnSpreadBackward() {
+            if (isFlipping) return;
+
+            if (currentSpreadIndex === 0) {
+                closeBook();
+                return;
+            }
+
+            isFlipping = true;
+
+            const prevSpreadIndex = currentSpreadIndex - 1;
+            const currentSpread = getSpreadContent(currentSpreadIndex);
+            const prevSpread = getSpreadContent(prevSpreadIndex);
+
+            activeFlippingSheet.frontMat.map = renderRightPageCanvas(prevSpread.right);
+            activeFlippingSheet.frontMat.needsUpdate = true;
+            activeFlippingSheet.backMat.map = renderLeftPageCanvas(currentSpread.left);
+            activeFlippingSheet.backMat.needsUpdate = true;
+
+            leftPageMesh.material[4].map = renderLeftPageCanvas(prevSpread.left);
+            leftPageMesh.material[4].needsUpdate = true;
+
+            activeFlippingSheet.pivot.visible = true;
+            const startRot = -Math.PI * 0.94;
+            const targetRot = 0;
+
+            const startTime = performance.now();
+            const duration = 650;
+
+            function animateBack(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(1, elapsed / duration);
+                const ease = progress < 0.5 ? 4 * progress * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+                activeFlippingSheet.pivot.rotation.y = startRot + (ease * (targetRot - startRot));
+                activeFlippingSheet.pivot.rotation.z = -Math.sin(progress * Math.PI) * 0.08;
+
+                if (progress < 1) {
+                    requestAnimationFrame(animateBack);
+                } else {
+                    currentSpreadIndex = prevSpreadIndex;
+
+                    rightPageMesh.material[4].map = renderRightPageCanvas(prevSpread.right);
+                    rightPageMesh.material[4].needsUpdate = true;
+
+                    activeFlippingSheet.pivot.visible = false;
+                    activeFlippingSheet.pivot.rotation.y = 0;
+                    activeFlippingSheet.pivot.rotation.z = 0;
+                    isFlipping = false;
+
+                    showToast(`Returned to Chapter ${prevSpread.chapterNumber}`);
+                }
+            }
+
+            requestAnimationFrame(animateBack);
+        }
+
+        function onWindowResize() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            if (width < 900) {
+                bookGroup.position.set(0, 0.06, 0);
+                targetCamZ = isBookOpen ? 4.2 : 5.2;
+            } else {
+                bookGroup.position.set(defaultBookPos.x, defaultBookPos.y, defaultBookPos.z);
+                targetCamZ = isBookOpen ? 3.65 : 4.9;
+            }
+        }
+
+        /* -------------------------------------------------------------
+           CONTINUOUS RENDER & FLOATING PHYSICS LOOP
+        ------------------------------------------------------------- */
+        let clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            const elapsed = clock.getElapsedTime();
+
+            // Smooth Cover opening/closing
+            coverPivot.rotation.y += (targetCoverRot - coverPivot.rotation.y) * 0.12;
+
+            // Only hide left page mesh once cover is nearly shut
+            if (!isBookOpen && Math.abs(coverPivot.rotation.y) < 0.15) {
+                leftPageMesh.visible = false;
+            }
+
+            // Camera smooth zoom
+            camera.position.z += (targetCamZ - camera.position.z) * 0.08;
+
+            // Gentle floating in place & smooth rotation orientation
+            if (!isDragging) {
+                if (isAligningToTarget) {
+                    bookGroup.rotation.x += (targetBookRot.x - bookGroup.rotation.x) * 0.09;
+                    bookGroup.rotation.y += (targetBookRot.y - bookGroup.rotation.y) * 0.09;
+                    bookGroup.rotation.z += (targetBookRot.z - bookGroup.rotation.z) * 0.09;
+                    if (Math.abs(bookGroup.rotation.y - targetBookRot.y) < 0.005) {
+                        isAligningToTarget = false;
+                    }
+                }
+                const targetY = (window.innerWidth < 900 ? 0.06 : defaultBookPos.y) + Math.sin(elapsed * 1.5) * 0.02;
+                bookGroup.position.y += (targetY - bookGroup.position.y) * 0.08;
+
+                bookGroup.rotation.y += bookRotationVelocity.x;
+                bookGroup.rotation.x += bookRotationVelocity.y;
+                bookRotationVelocity.x *= 0.94;
+                bookRotationVelocity.y *= 0.94;
+            }
+
+            // Animate subtle floating dust particles
+            if (particlesMesh) {
+                const pos = particlesMesh.geometry.attributes.position.array;
+                for (let i = 0; i < pos.length; i += 3) {
+                    pos[i + 1] += Math.sin(elapsed + pos[i]) * 0.002;
+                    pos[i] += Math.cos(elapsed * 0.5 + pos[i + 2]) * 0.0015;
+                }
+                particlesMesh.geometry.attributes.position.needsUpdate = true;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        /* -------------------------------------------------------------
+           AUTHENTICATION MODALS (LOGIN & SIGN UP ONLY)
+        ------------------------------------------------------------- */
+        const loginModal = document.getElementById('login-modal');
+        const signupModal = document.getElementById('signup-modal');
+        const openLoginBtn = document.getElementById('open-login-btn');
+        const openSignupBtn = document.getElementById('open-signup-btn');
+        const switchToSignup = document.getElementById('switch-to-signup');
+        const switchToLogin = document.getElementById('switch-to-login');
+        const closeButtons = document.querySelectorAll('[data-close]');
+        const bookCloseTrigger = document.getElementById('book-close-trigger');
+
+        if (bookCloseTrigger) {
+            bookCloseTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                closeBook();
+            });
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (loginModal && loginModal.classList.contains('active')) closeModal(loginModal);
+                else if (signupModal && signupModal.classList.contains('active')) closeModal(signupModal);
+                else if (isBookOpen) closeBook();
+            }
+        });
+
+        function openModal(modal) {
+            modal.classList.add('active');
+        }
+
+        function closeModal(modal) {
+            modal.classList.remove('active');
+        }
+
+        openLoginBtn.addEventListener('click', () => openModal(loginModal));
+        openSignupBtn.addEventListener('click', () => openModal(signupModal));
+
+        switchToSignup.addEventListener('click', () => {
+            closeModal(loginModal);
+            setTimeout(() => openModal(signupModal), 200);
+        });
+
+        switchToLogin.addEventListener('click', () => {
+            closeModal(signupModal);
+            setTimeout(() => openModal(loginModal), 200);
+        });
+
+        closeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetId = btn.getAttribute('data-close');
+                closeModal(document.getElementById(targetId));
+            });
+        });
+
+        [loginModal, signupModal].forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal(modal);
+                }
+            });
+        });
+
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-message');
+            msgEl.innerText = message;
+            toast.classList.add('active');
+            clearTimeout(window.toastTimer);
+            window.toastTimer = setTimeout(() => {
+                toast.classList.remove('active');
+            }, 2800);
+        }
+
+        // REAL AUTHENTICATION HANDLERS
+        const loginForm = document.getElementById('login-form');
+        const loginBtn = document.getElementById('login-submit-btn');
+        const loginErrorMsg = document.getElementById('login-error-msg');
+
+        if (loginForm) {
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                loginErrorMsg.style.display = 'none';
+                loginErrorMsg.innerText = '';
+
+                const identifier = document.getElementById('login-identifier').value.trim();
+                const password = document.getElementById('login-pwd-input').value.trim();
+
+                if (!identifier || !password) {
+                    loginErrorMsg.innerText = 'Please enter both your email/username and password.';
+                    loginErrorMsg.style.display = 'block';
+                    return;
+                }
+
+                loginBtn.disabled = true;
+                loginBtn.innerText = 'Authenticating...';
+
+                try {
+                    const res = await fetch('/api/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({ username: identifier, password: password })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        localStorage.setItem('isAuthenticated', 'true');
+                        localStorage.setItem('userId', data.id);
+                        localStorage.setItem('username', data.username);
+                        if (data.email) localStorage.setItem('email', data.email);
+                        if (data.mobile) localStorage.setItem('mobile', data.mobile);
+
+                        showToast(`Welcome back, ${data.username}!`);
+                        setTimeout(() => {
+                            if (window.parent && window.parent !== window) {
+                                window.parent.postMessage({ type: 'AUTH_SUCCESS', user: data }, '*');
+                            }
+                            window.location.href = '/';
+                        }, 800);
+                    } else {
+                        loginErrorMsg.innerText = data.error || 'Invalid username or password. Please try again.';
+                        loginErrorMsg.style.display = 'block';
+                    }
+                } catch (err) {
+                    console.error('Login error:', err);
+                    loginErrorMsg.innerText = 'Unable to reach backend server. Please verify port 5000 is running.';
+                    loginErrorMsg.style.display = 'block';
+                } finally {
+                    loginBtn.disabled = false;
+                    loginBtn.innerText = 'Login →';
+                }
+            });
+        }
+
+        const signupForm = document.getElementById('signup-form');
+        const signupBtn = document.getElementById('signup-submit-btn');
+        const signupErrorMsg = document.getElementById('signup-error-msg');
+
+        if (signupForm) {
+            signupForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                signupErrorMsg.style.display = 'none';
+                signupErrorMsg.innerText = '';
+
+                const fullName = document.getElementById('signup-fullname').value.trim();
+                const email = document.getElementById('signup-email').value.trim();
+                const mobile = document.getElementById('signup-mobile').value.trim();
+                const password = document.getElementById('signup-pwd-input').value.trim();
+                const confirmPassword = document.getElementById('signup-cpwd-input').value.trim();
+
+                if (!fullName || !email || !mobile || !password || !confirmPassword) {
+                    signupErrorMsg.innerText = 'Please fill in all required fields.';
+                    signupErrorMsg.style.display = 'block';
+                    return;
+                }
+                if (fullName.length < 3) {
+                    signupErrorMsg.innerText = 'Full Name must be at least 3 characters long.';
+                    signupErrorMsg.style.display = 'block';
+                    return;
+                }
+                const cleanedMobile = mobile.replace(/\D/g, '');
+                if (cleanedMobile.length !== 10) {
+                    signupErrorMsg.innerText = 'Please enter a valid 10-digit mobile number.';
+                    signupErrorMsg.style.display = 'block';
+                    return;
+                }
+                if (password.length < 4) {
+                    signupErrorMsg.innerText = 'Password must be at least 4 characters long.';
+                    signupErrorMsg.style.display = 'block';
+                    return;
+                }
+                if (password !== confirmPassword) {
+                    signupErrorMsg.innerText = 'Passwords do not match.';
+                    signupErrorMsg.style.display = 'block';
+                    return;
+                }
+
+                signupBtn.disabled = true;
+                signupBtn.innerText = 'Creating Account...';
+
+                try {
+                    const res = await fetch('/api/signup', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({
+                            username: fullName,
+                            email: email,
+                            mobile: cleanedMobile,
+                            password: password
+                        })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        localStorage.setItem('isAuthenticated', 'true');
+                        localStorage.setItem('userId', data.id);
+                        localStorage.setItem('username', data.username);
+                        if (data.email) localStorage.setItem('email', data.email);
+                        if (data.mobile) localStorage.setItem('mobile', data.mobile);
+
+                        showToast(`Account created! Welcome, ${data.username}`);
+                        setTimeout(() => {
+                            if (window.parent && window.parent !== window) {
+                                window.parent.postMessage({ type: 'AUTH_SUCCESS', user: data }, '*');
+                            }
+                            window.location.href = '/';
+                        }, 800);
+                    } else {
+                        signupErrorMsg.innerText = data.error || 'Signup failed. Please try again.';
+                        signupErrorMsg.style.display = 'block';
+                    }
+                } catch (err) {
+                    console.error('Signup error:', err);
+                    signupErrorMsg.innerText = 'Unable to reach backend server. Please verify port 5000 is running.';
+                    signupErrorMsg.style.display = 'block';
+                } finally {
+                    signupBtn.disabled = false;
+                    signupBtn.innerText = 'Create Account →';
+                }
+            });
+        }
+
+        function startApp() {
+            try {
+                if (typeof THREE === 'undefined') {
+                    console.warn('Waiting for Three.js to finish loading...');
+                    setTimeout(startApp, 50);
+                    return;
+                }
+                init3D();
+                animate();
+                onWindowResize();
+                console.log('BookBridge 3D Book initialized successfully.');
+            } catch (err) {
+                console.error('Error starting 3D Book experience:', err);
+            }
+        }
+
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            startApp();
+        } else {
+            window.addEventListener('DOMContentLoaded', startApp);
+            window.addEventListener('load', startApp);
+        }
+    </script>
+</body>
+</html>

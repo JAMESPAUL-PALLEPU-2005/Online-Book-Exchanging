@@ -44,68 +44,131 @@ const User = mongoose.model('User', userSchema);
 const Book = mongoose.model('Book', bookSchema);
 const Request = mongoose.model('Request', requestSchema);
 
-// DB Connection helper
-let cachedDb = null;
+// Helper to escape regex special characters
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// Helper to sanitize and normalize phone numbers
+const normalizeMobile = (mobileStr) => {
+  if (!mobileStr) return '';
+  let cleaned = mobileStr.toString().replace(/\D/g, '');
+  if (cleaned.length === 12 && cleaned.startsWith('91')) {
+    cleaned = cleaned.substring(2);
+  }
+  if (cleaned.length === 11 && cleaned.startsWith('0')) {
+    cleaned = cleaned.substring(1);
+  }
+  return cleaned;
+};
+
+// DB Connection helper with auto-reconnect & state check
 const connectDB = async () => {
   if (mongoose.connection.readyState === 1) return;
   const uri = process.env.MONGODB_URI;
   if (!uri) {
     throw new Error('MONGODB_URI environment variable is missing');
   }
-  if (!cachedDb) {
-    cachedDb = await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 5000,
-    });
-    console.log('Connected to MongoDB successfully.');
+  if (mongoose.connection.readyState === 2) {
+    let count = 0;
+    while (mongoose.connection.readyState === 2 && count < 20) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      count++;
+    }
+    if (mongoose.connection.readyState === 1) return;
   }
-  return cachedDb;
+  await mongoose.connect(uri, {
+    serverSelectionTimeoutMS: 10000,
+    socketTimeoutMS: 45000,
+    maxIdleTimeMS: 30000,
+  });
+  console.log('Connected to MongoDB Atlas successfully.');
 };
 
 app.use(async (req, res, next) => {
+  if (req.method === 'OPTIONS') return next();
   try {
     await connectDB();
     next();
   } catch (err) {
-    console.error('MongoDB connection error:', err);
-    res.status(500).json({ error: 'Database connection failed', details: err.message });
+    console.error('MongoDB Atlas connection error:', err);
+    res.status(500).json({
+      error: 'Database connection failed. Please ensure MongoDB Atlas is reachable.',
+      details: err.message,
+    });
   }
 });
 
+// Router for API endpoints
+const router = express.Router();
+
+// Health Check
+router.get('/health', (req, res) => {
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  res.json({
+    status: 'ok',
+    database: dbStatus,
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Signup Route
-app.post('/api/signup', async (req, res) => {
+router.post('/signup', async (req, res) => {
   const { username, email, password, mobile } = req.body;
   if (!username || !email || !password || !mobile) {
-    return res.status(400).json({ error: 'Please fill in all details' });
+    return res.status(400).json({ error: 'Please fill in all required fields' });
   }
+
+  const cleanUsername = username.trim();
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanPassword = password.trim();
+  const cleanedMobile = normalizeMobile(mobile);
+
+  if (cleanUsername.length < 3) {
+    return res.status(400).json({ error: 'Username must be at least 3 characters long' });
+  }
+
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email.trim())) {
+  if (!emailRegex.test(cleanEmail)) {
     return res.status(400).json({ error: 'Please enter a valid email address' });
   }
-  if (mobile.trim().length !== 10) {
-    return res.status(400).json({ error: 'Mobile number must be 10 digits' });
+
+  if (cleanedMobile.length !== 10) {
+    return res.status(400).json({ error: 'Please enter a valid 10-digit mobile number' });
   }
+
+  if (cleanPassword.length < 4) {
+    return res.status(400).json({ error: 'Password must be at least 4 characters long' });
+  }
+
   try {
-    const existingUsername = await User.findOne({ username: username.trim() });
+    // Check if username already exists (case-insensitive)
+    const existingUsername = await User.findOne({
+      username: { $regex: new RegExp(`^${escapeRegex(cleanUsername)}$`, 'i') },
+    });
     if (existingUsername) {
-      return res.status(400).json({ error: 'Username already exists' });
+      return res.status(400).json({ error: 'Username is already taken' });
     }
-    const existingEmail = await User.findOne({ email: email.trim().toLowerCase() });
+
+    // Check if email already registered
+    const existingEmail = await User.findOne({ email: cleanEmail });
     if (existingEmail) {
       return res.status(400).json({ error: 'Email is already registered' });
     }
+
     const newUser = new User({
-      username: username.trim(),
-      email: email.trim().toLowerCase(),
-      password: password.trim(),
-      mobile: mobile.trim()
+      username: cleanUsername,
+      email: cleanEmail,
+      password: cleanPassword,
+      mobile: cleanedMobile,
     });
     await newUser.save();
     console.log(`User created successfully in MongoDB Atlas: ${newUser.username} (${newUser.email})`);
+
     return res.status(201).json({
       id: newUser._id.toString(),
       username: newUser.username,
       email: newUser.email,
-      mobile: newUser.mobile
+      mobile: newUser.mobile,
+      message: 'Account created successfully in MongoDB Atlas',
     });
   } catch (err) {
     console.error('Signup error:', err);
@@ -113,39 +176,57 @@ app.post('/api/signup', async (req, res) => {
   }
 });
 
-// Login Route
-app.post('/api/login', async (req, res) => {
+// Login Route (Supports username OR email, case-insensitive)
+router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
-    return res.status(400).json({ error: 'Please fill in all details' });
+    return res.status(400).json({ error: 'Please provide both username/email and password' });
   }
+
+  const identifier = username.trim();
+  const cleanPassword = password.trim();
+
   try {
-    const user = await User.findOne({ username: username.trim() });
-    if (!user || user.password !== password.trim()) {
-      return res.status(400).json({ error: 'Invalid username or password' });
+    const user = await User.findOne({
+      $or: [
+        { username: { $regex: new RegExp(`^${escapeRegex(identifier)}$`, 'i') } },
+        { email: identifier.toLowerCase() },
+      ],
+    });
+
+    if (!user || user.password !== cleanPassword) {
+      return res.status(400).json({ error: 'Invalid username/email or password' });
     }
+
     return res.json({
       id: user._id.toString(),
       username: user.username,
       email: user.email,
-      mobile: user.mobile
+      mobile: user.mobile,
+      message: 'Logged in successfully via MongoDB Atlas',
     });
   } catch (err) {
     console.error('Login error:', err);
-    return res.status(500).json({ error: 'Server error during login' });
+    return res.status(500).json({ error: 'Server error during login', details: err.message });
   }
 });
 
 // Get Books Route
-app.get('/api/books', async (req, res) => {
+router.get('/books', async (req, res) => {
   const { search } = req.query;
   try {
     let query = {};
     if (search && search.trim() !== '') {
-      query = { title: { $regex: search, $options: 'i' } };
+      const reg = new RegExp(escapeRegex(search.trim()), 'i');
+      query = {
+        $or: [
+          { title: { $regex: reg } },
+          { author: { $regex: reg } },
+        ],
+      };
     }
-    const books = await Book.find(query);
-    const formattedBooks = books.map(b => ({
+    const books = await Book.find(query).sort({ createdAt: -1 });
+    const formattedBooks = books.map((b) => ({
       id: b._id.toString(),
       title: b.title,
       author: b.author,
@@ -153,7 +234,7 @@ app.get('/api/books', async (req, res) => {
       userId: b.userId,
       username: b.username,
       email: b.email || '',
-      mobileNumber: b.mobile
+      mobileNumber: b.mobile,
     }));
     return res.json(formattedBooks);
   } catch (err) {
@@ -163,7 +244,7 @@ app.get('/api/books', async (req, res) => {
 });
 
 // Add Book Route
-app.post('/api/books', async (req, res) => {
+router.post('/books', async (req, res) => {
   const { title, author, imageLink, userId } = req.body;
   if (!title || !author || !userId) {
     return res.status(400).json({ error: 'Missing required book fields' });
@@ -180,7 +261,7 @@ app.post('/api/books', async (req, res) => {
       userId: user._id.toString(),
       username: user.username,
       email: user.email,
-      mobile: user.mobile
+      mobile: user.mobile,
     });
     await newBook.save();
     return res.status(201).json({
@@ -191,7 +272,7 @@ app.post('/api/books', async (req, res) => {
       userId: newBook.userId,
       username: newBook.username,
       email: newBook.email,
-      mobileNumber: newBook.mobile
+      mobileNumber: newBook.mobile,
     });
   } catch (err) {
     console.error('Add book error:', err);
@@ -200,7 +281,7 @@ app.post('/api/books', async (req, res) => {
 });
 
 // Delete Book Route
-app.delete('/api/books/:id', async (req, res) => {
+router.delete('/books/:id', async (req, res) => {
   try {
     await Book.findByIdAndDelete(req.params.id);
     await Request.deleteMany({ bookId: req.params.id });
@@ -212,7 +293,7 @@ app.delete('/api/books/:id', async (req, res) => {
 });
 
 // Request Book Route
-app.post('/api/requests', async (req, res) => {
+router.post('/requests', async (req, res) => {
   const { userId, bookId, title, author, imageLink, ownerUsername, ownerEmail, ownerMobile } = req.body;
   try {
     const newRequest = new Request({
@@ -223,7 +304,7 @@ app.post('/api/requests', async (req, res) => {
       imageLink: imageLink || 'https://assets.ccbp.in/frontend/react-js/book-store-img.png',
       ownerUsername,
       ownerEmail,
-      ownerMobile
+      ownerMobile,
     });
     await newRequest.save();
     return res.status(201).json({
@@ -235,7 +316,7 @@ app.post('/api/requests', async (req, res) => {
       imageLink: newRequest.imageLink,
       username: newRequest.ownerUsername,
       email: newRequest.ownerEmail,
-      mobileNumber: newRequest.ownerMobile
+      mobileNumber: newRequest.ownerMobile,
     });
   } catch (err) {
     console.error('Add request error:', err);
@@ -244,14 +325,14 @@ app.post('/api/requests', async (req, res) => {
 });
 
 // Get User Books / Requests Route
-app.get('/api/user-data/:userId', async (req, res) => {
+router.get('/user-data/:userId', async (req, res) => {
   const { userId } = req.params;
   try {
-    const yourBooks = await Book.find({ userId });
-    const requestedBooks = await Request.find({ userId });
-    
+    const yourBooks = await Book.find({ userId }).sort({ createdAt: -1 });
+    const requestedBooks = await Request.find({ userId }).sort({ createdAt: -1 });
+
     return res.json({
-      yourBooks: yourBooks.map(b => ({
+      yourBooks: yourBooks.map((b) => ({
         id: b._id.toString(),
         title: b.title,
         author: b.author,
@@ -259,17 +340,17 @@ app.get('/api/user-data/:userId', async (req, res) => {
         userId: b.userId,
         username: b.username,
         email: b.email || '',
-        mobileNumber: b.mobile
+        mobileNumber: b.mobile,
       })),
-      requestedBooks: requestedBooks.map(r => ({
+      requestedBooks: requestedBooks.map((r) => ({
         id: r._id.toString(),
         title: r.title,
         author: r.author,
         imageLink: r.imageLink,
         username: r.ownerUsername,
         email: r.ownerEmail || '',
-        mobileNumber: r.ownerMobile
-      }))
+        mobileNumber: r.ownerMobile,
+      })),
     });
   } catch (err) {
     console.error('Get user data error:', err);
@@ -278,7 +359,7 @@ app.get('/api/user-data/:userId', async (req, res) => {
 });
 
 // Delete Request Route
-app.delete('/api/requests/:id', async (req, res) => {
+router.delete('/requests/:id', async (req, res) => {
   try {
     await Request.findByIdAndDelete(req.params.id);
     return res.json({ message: 'Request removed successfully' });
@@ -287,6 +368,10 @@ app.delete('/api/requests/:id', async (req, res) => {
     return res.status(500).json({ error: 'Server error deleting request' });
   }
 });
+
+// Mount router on both '/api' and '/' to ensure full compatibility with Vercel and local dev
+app.use('/api', router);
+app.use('/', router);
 
 if (require.main === module) {
   app.listen(PORT, () => {

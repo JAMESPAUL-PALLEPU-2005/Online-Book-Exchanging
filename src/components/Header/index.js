@@ -9,6 +9,8 @@ const Header = (props) => {
     const classNameHistory = currentTab === 'history' ? 'current' : '';
     const navigate = useNavigate();
 
+    const username = localStorage.getItem('username');
+
     const setTab = (value) => {
         changeTab(value);
     };
@@ -17,17 +19,25 @@ const Header = (props) => {
         localStorage.removeItem('isAuthenticated');
         localStorage.removeItem('userId');
         localStorage.removeItem('username');
-        navigate('/login');
+        localStorage.removeItem('email');
+        localStorage.removeItem('mobile');
+        navigate('/');
+        window.location.reload();
     };
 
     return (
         <div className="header-section">
             <h1 className="website-heading">Online Book Exchange</h1>
             <div className="tabs-container">
+                {username && (
+                    <span className="user-badge" title="Logged in with MongoDB Atlas">
+                        👤 {username}
+                    </span>
+                )}
                 <p className={`tab-text ${classNameHome}`} onClick={() => setTab('home')}>Home</p>
                 <p className={`tab-text ${classNameHistory}`} onClick={() => setTab('history')}>History</p>
                 <p className={`tab-text ${classNameAbout}`} onClick={() => setTab('about')}>About</p>
-                <p className="tab-text" onClick={handleLogout}>Logout</p>
+                <p className="tab-text" onClick={handleLogout} style={{ color: '#f87171' }}>Logout</p>
             </div>
         </div>
     );

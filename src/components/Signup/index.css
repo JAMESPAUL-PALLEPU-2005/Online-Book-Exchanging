@@ -1,191 +1,411 @@
-/* Existing styles for other components */
+/* BookBridge - 3D Single Book Hero & Compact Glassmorphism Theme */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+    --gold-primary: #f5c555;
+    --gold-light: #fde68a;
+    --gold-dark: #b45309;
+    --gold-gradient: linear-gradient(135deg, #f5c555 0%, #d97706 100%);
+    --gold-glow: rgba(245, 197, 85, 0.4);
+    --glass-bg: rgba(8, 13, 26, 0.78);
+    --glass-border: rgba(245, 197, 85, 0.32);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+}
+
 .a-bg-container {
     min-height: 100vh;
-    margin: 0px;
-    display: flex;
-    justify-content: center;
-    flex-direction: column;
-    align-items: center;
-    background-image: url('https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimages2.alphacoders.com%2F261%2F26102.jpg&f=1&nofb=1&ipt=65ca0e7beb90c2c0e875f76f3518eff14d1cab876ee04293482bcbf99731492b&ipo=images');
-}
-
-.home-container {
-    padding: 30px;
+    margin: 0;
+    padding: 30px 6%;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-self: center;
+    align-items: flex-end; /* Card aligned to the right so 3D book on left is fully visible */
+    background: radial-gradient(circle at 35% 50%, rgba(4, 7, 16, 0) 30%, rgba(3, 5, 12, 0.75) 100%),
+                url('../../resources/bookbridge-hero.jpg') center/cover no-repeat fixed;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: var(--text-main);
+    position: relative;
 }
 
-.added-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.added-text {
-    font-size: 2.2rem;
-    color: #09e23b;
-}
-
-.operation-area {
-    width: 80%;
-    display: flex;
-    flex-direction: row;
-    margin-left: auto;
-}
-
-.btn {
-    border: none;
-    padding: 15px;
-    width: 100px;
-    background-color: #575e1a;
-    color: white;
-    border-radius: 14px;
-    cursor: pointer;
-}
-
-.input-box {
-    margin-left: 5px;
-    width: 75%;
-    outline: none;
-    padding: 15px;
-    border: none;
-    border-radius: 14px;
-}
-
-.home-header {
+/* Header with only: BookBridge - An Online Book Exchange Platform */
+.auth-brand-container {
     text-align: center;
-    margin: 15px;
-    color: #353943;
-    font-size: 1.8rem;
-}
-
-.history-container {
-    display: flex;
-    padding: 25px;
-    flex-direction: column;
-    align-items: center;
-}
-
-.btn-container {
-    display: flex;
-    margin: 15px;
-    background-color: #191515;
-    border-radius: 15px;
-}
-
-.history-btn {
-    border: 2.5px solid #191515;
-    background-color: #191515;
-    padding: 15px;
-    color: #484646;
-}
-
-.left {
-    border-radius: 15px;
-}
-
-.right {
-    border-radius: 15px;
-}
-
-.selected-left {
-    background-color: #c3c3c3;
-    color: #191515;
-    border-radius: 15px;
-    margin: 10px;
-}
-
-.selected-right {
-    background-color: #c3c3c3;
-    color: #191515;
-    margin: 10px;
-    border-radius: 15px;
-}
-
-.history-elements-container {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-evenly;
-    flex-wrap: wrap;
-}
-
-.about-container {
-    text-align: center;
-    padding: 25px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.about-header {
-    font-size: 2.3rem;
-    color: #5c5205;
-    margin: 15px;
-}
-
-.participants {
-    font-size: 1.3rem;
-    color: #191515;
-    margin: 10px;
-}
-
-.names-container {
-    align-self: center;
-    width: 65%;
-    max-width: 450px;
-    text-align: center;
-    margin: 15px;
-    background-color: #f4eaea;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    border-radius: 15px;
-    padding: 25px;
-    box-shadow: 0px 3px 5px black;
-}
-
-.name-rollno {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
+    margin-bottom: 16px;
     width: 100%;
-    margin: 8px;
+    max-width: 395px;
+    box-sizing: border-box;
 }
 
-.aboutText {
-    font-size: 1.1rem;
+.auth-brand-statement {
+    font-family: 'Cinzel', serif;
+    font-size: 1.6rem;
     font-weight: 700;
-    color: #313131;
+    letter-spacing: 1.5px;
+    background: linear-gradient(135deg, #ffffff 40%, var(--gold-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+    line-height: 1.35;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.8);
 }
 
-.history-elements-container {
-    width: 100%;
+.auth-brand-sub {
+    font-size: 0.88rem;
+    color: var(--gold-primary);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
 }
 
-/* Styles specific for the login and signup pages */
+/* Compact, Ultra-Attractive Glassmorphism Card */
 .login-container, .signup-container {
-    padding: 30px;
+    padding: 28px 24px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin: auto;
-    border: 1px solid #ccc;
-    border-radius: 15px;
-    background-color: #f9f9f9;
-    width: 60%;
+    background: var(--glass-bg);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1.5px solid var(--glass-border);
+    border-radius: 22px;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.8), 0 0 35px rgba(245, 197, 85, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    width: 100%;
+    max-width: 395px;
+    box-sizing: border-box;
+    animation: cardSlideIn 0.5s ease-out;
+}
+
+@keyframes cardSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(25px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+.login-container:hover, .signup-container:hover {
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.88), 0 0 45px rgba(245, 197, 85, 0.18);
+}
+
+/* Top Book Icon */
+.card-top-icon {
+    width: 46px;
+    height: 46px;
+    margin: 0 auto 10px auto;
+    background: radial-gradient(circle, rgba(245, 197, 85, 0.22) 0%, rgba(245, 197, 85, 0.04) 70%);
+    border: 1.5px solid var(--gold-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 20px var(--gold-glow);
+}
+
+.card-top-icon svg {
+    width: 22px;
+    height: 22px;
+    fill: var(--gold-primary);
 }
 
 .login-header, .signup-header {
-    font-size: 2rem;
-    margin-bottom: 20px;
-    color: #353943;
+    font-family: 'Cinzel', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: #ffffff;
+    text-align: center;
+    letter-spacing: 0.5px;
 }
 
-.error-message {
-    color: red;
-    margin-top: 10px;
+.auth-desc {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin: 0 0 18px 0;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.auth-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+}
+
+.input-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #cbd5e1;
+    text-align: left;
+    letter-spacing: 0.3px;
+}
+
+.input-wrapper-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.field-icon {
+    position: absolute;
+    left: 14px;
+    width: 18px;
+    height: 18px;
+    fill: #94a3b8;
+    pointer-events: none;
+    transition: fill 0.2s;
+}
+
+.auth-input {
+    width: 100%;
+    height: 44px;
+    box-sizing: border-box;
+    padding: 0 42px;
+    border: 1.5px solid rgba(148, 163, 184, 0.24);
+    border-radius: 11px;
+    font-size: 0.92rem;
+    color: #ffffff;
+    background-color: rgba(15, 23, 42, 0.6);
+    transition: all 0.25s ease;
+    outline: none;
+    font-family: inherit;
+}
+
+.auth-input::placeholder {
+    color: #64748b;
+    font-size: 0.86rem;
+}
+
+.auth-input:focus {
+    border-color: var(--gold-primary);
+    background-color: rgba(15, 23, 42, 0.88);
+    box-shadow: 0 0 0 3px rgba(245, 197, 85, 0.2), 0 0 16px rgba(245, 197, 85, 0.15);
+}
+
+.input-wrapper-icon:focus-within .field-icon {
+    fill: var(--gold-primary);
+}
+
+.password-input {
+    padding-right: 44px;
+}
+
+.toggle-password-btn {
+    position: absolute;
+    right: 10px;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 5px 6px;
+    border-radius: 6px;
+    transition: color 0.2s;
+}
+
+.toggle-password-btn:hover {
+    color: var(--gold-primary);
+}
+
+/* Options */
+.form-options-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    color: #cbd5e1;
+    margin-top: -2px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkbox-label input {
+    accent-color: var(--gold-primary);
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+
+.forgot-link {
+    color: var(--gold-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.forgot-link:hover {
+    color: var(--gold-light);
+    text-decoration: underline;
+}
+
+/* Primary Button */
+.auth-btn-primary {
+    width: 100%;
+    height: 46px;
+    margin-top: 4px;
+    background: var(--gold-gradient);
+    color: #0f172a;
+    font-size: 0.98rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 11px;
+    cursor: pointer;
+    box-shadow: 0 6px 20px var(--gold-glow);
+    transition: all 0.25s ease;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.auth-btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 26px rgba(245, 197, 85, 0.6);
+    filter: brightness(1.05);
+}
+
+.auth-btn-primary:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* OR Divider */
+.or-divider {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin: 10px 0 6px 0;
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+}
+
+.or-divider::before, .or-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(148, 163, 184, 0.18);
+}
+
+.or-divider span {
+    padding: 0 10px;
+}
+
+/* Outlined Button */
+.btn-outlined {
+    width: 100%;
+    height: 42px;
+    background: transparent;
+    border: 1.5px solid rgba(245, 197, 85, 0.4);
+    border-radius: 11px;
+    color: var(--gold-primary);
+    font-size: 0.92rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.btn-outlined:hover {
+    background: rgba(245, 197, 85, 0.1);
+    border-color: var(--gold-primary);
+    box-shadow: 0 0 16px rgba(245, 197, 85, 0.22);
+}
+
+/* Badges */
+.error-badge {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    background-color: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #fca5a5;
+    border-radius: 9px;
+    font-size: 0.84rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+.success-badge {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    background-color: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.35);
+    color: #86efac;
+    border-radius: 9px;
+    font-size: 0.84rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+.auth-switch-text {
+    margin-top: 12px;
+    font-size: 0.88rem;
+    color: #cbd5e1;
+    text-align: center;
+}
+
+.auth-link-golden {
+    color: var(--gold-primary);
+    font-weight: 700;
+    text-decoration: none;
+    margin-left: 4px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.auth-link-golden:hover {
+    color: var(--gold-light);
+    text-shadow: 0 0 8px var(--gold-glow);
+    text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+    .a-bg-container {
+        align-items: center; /* Center on tablets / mobile */
+        padding: 40px 16px;
+    }
+    .auth-brand-container {
+        text-align: center;
+    }
+}
+
+@media (max-width: 440px) {
+    .login-container, .signup-container {
+        padding: 24px 18px;
+    }
+    .login-header, .signup-header {
+        font-size: 1.45rem;
+    }
 }

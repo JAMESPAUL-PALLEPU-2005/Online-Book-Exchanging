@@ -13,15 +13,17 @@ class BooksContainer extends Component {
 
         if (searchType === 'addBook') {
             try {
-                const queryParam = searchValue ? searchValue.replace(/\s+/g, '+') : 'react';
-                const apiResponse = await fetch(`https://apis.ccbp.in/book-store?title=${queryParam}`);
+                const queryParam = searchValue ? encodeURIComponent(searchValue.trim()) : 'fiction';
+                const apiResponse = await fetch(`https://openlibrary.org/search.json?q=${queryParam}&limit=12`);
                 if (apiResponse.ok) {
                     const result = await apiResponse.json();
-                    const updatedBooksWithId = (result.search_results || []).map((eachResult) => ({
+                    const updatedBooksWithId = (result.docs || []).map((doc) => ({
                         id: uuidv4(),
-                        title: eachResult.title || 'Untitled Book',
-                        author: eachResult.author || 'Unknown Author',
-                        imageLink: eachResult.image_url || 'https://assets.ccbp.in/frontend/react-js/book-store-img.png',
+                        title: doc.title || 'Untitled Book',
+                        author: (doc.author_name && doc.author_name[0]) || 'Unknown Author',
+                        imageLink: doc.cover_i
+                            ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`
+                            : 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=300&q=80',
                     }));
                     this.setState({ isLoading: false, searchResultsBooks: updatedBooksWithId });
                 } else {
@@ -111,7 +113,7 @@ class BooksContainer extends Component {
                     const requestedBook = await response.json();
                     addBook(requestedBook);
                     const emailMsg = book.email ? `\nEmail: ${book.email}` : '';
-                    alert(`Requested "${book.title}"!\nLender Username: ${book.username}${emailMsg}\nContact: ${book.mobileNumber}`);
+                    alert(`Your Book is Travelling to You\n\nBook: "${book.title}"\nLender: ${book.username}${emailMsg}\nContact: ${book.mobileNumber}`);
                 } else {
                     alert('Error submitting borrow request.');
                 }
