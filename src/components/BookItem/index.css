@@ -1,27 +1,29 @@
 .book-item-container {
-    width: 240px;
-    margin: 16px;
+    width: 100%;
+    max-width: 260px;
     background-color: #ffffff;
     padding: 16px;
-    min-height: 380px;
+    min-height: 370px;
+    height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
     border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     cursor: pointer;
     transition: transform 0.25s ease, box-shadow 0.25s ease;
     box-sizing: border-box;
 }
 
 .book-item-container:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.22);
+    transform: translateY(-5px);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.16);
 }
 
 .image-wrapper {
-    width: 140px;
+    width: 100%;
+    max-width: 140px;
     height: 195px;
     display: flex;
     justify-content: center;
@@ -36,22 +38,26 @@
     height: 100%;
     object-fit: cover;
     border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
     transition: transform 0.25s ease;
 }
 
 .book-item-container:hover .book-image {
-    transform: scale(1.05);
+    transform: scale(1.04);
 }
 
 .book-info {
     width: 100%;
     text-align: center;
     margin: 10px 0 6px 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .title {
-    font-size: 1.05rem;
+    font-size: clamp(0.92rem, 2.2vw, 1.05rem);
     color: #0f172a;
     font-weight: 700;
     margin: 0 0 4px 0;
@@ -63,7 +69,7 @@
 }
 
 .author {
-    font-size: 0.88rem;
+    font-size: clamp(0.78rem, 1.8vw, 0.88rem);
     font-weight: 500;
     color: #64748b;
     margin: 0 0 6px 0;
@@ -73,14 +79,18 @@
 }
 
 .lender-tag {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     color: #0284c7;
     background-color: #e0f2fe;
     padding: 3px 10px;
     border-radius: 12px;
     display: inline-block;
-    margin: 0;
+    margin: 0 auto;
     font-weight: 600;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .book-action-btn {
@@ -99,4 +109,32 @@
 
 .book-item-container:hover .book-action-btn {
     background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+@media (max-width: 540px) {
+    .book-item-container {
+        padding: 12px 10px;
+        min-height: 290px;
+        border-radius: 14px;
+    }
+    .image-wrapper {
+        max-width: 110px;
+        height: 150px;
+    }
+    .title {
+        font-size: 0.88rem;
+        line-height: 1.25;
+    }
+    .author {
+        font-size: 0.76rem;
+    }
+    .lender-tag {
+        font-size: 0.72rem;
+        padding: 2px 7px;
+    }
+    .book-action-btn {
+        padding: 8px 10px;
+        font-size: 0.82rem;
+        margin-top: 6px;
+    }
 }

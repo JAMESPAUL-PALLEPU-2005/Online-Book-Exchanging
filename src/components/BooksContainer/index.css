@@ -1,7 +1,18 @@
 .books-items-container {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-evenly;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 20px;
+    width: 100%;
+    max-width: 1320px;
+    margin: 0 auto;
+    box-sizing: border-box;
+    justify-items: center;
+    align-items: stretch;
+}
+
+@media (max-width: 540px) {
+    .books-items-container {
+        grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+        gap: 12px;
+    }
 }

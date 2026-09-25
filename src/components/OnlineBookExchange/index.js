@@ -177,58 +177,65 @@ class OnlineBookExchange extends Component {
                 {displayAdded ? (
                     <div className="added-container">
                         <h1 className="added-text">{addSectionContent}</h1>
-                        <button type="button" onClick={() => this.setState({ displayAdded: false })} className="btn" style={{ marginTop: '20px' }}>
+                        <button type="button" onClick={() => this.setState({ displayAdded: false })} className="btn btn-primary-action" style={{ marginTop: '20px' }}>
                             Back to Books
                         </button>
                     </div>
                 ) : (
                     <>
                         <div className="operation-area">
-                            <button type="button" onClick={this.changeSearchType} className="btn">{buttonContent}</button>
-                            {searchType === 'addBook' && (
-                                <button
-                                    type="button"
-                                    onClick={() => this.setState((prevState) => ({ showManualAdd: !prevState.showManualAdd }))}
-                                    className="btn"
-                                    style={{ backgroundColor: showManualAdd ? '#d9534f' : '#28a745', marginLeft: '10px' }}
-                                >
-                                    {showManualAdd ? 'Search Library' : '+ Add Custom Book'}
+                            <div className="operation-buttons-group">
+                                <button type="button" onClick={this.changeSearchType} className="btn btn-primary-action">
+                                    {buttonContent}
                                 </button>
-                            )}
+                                {searchType === 'addBook' && (
+                                    <button
+                                        type="button"
+                                        onClick={() => this.setState((prevState) => ({ showManualAdd: !prevState.showManualAdd }))}
+                                        className={`btn ${showManualAdd ? 'btn-danger' : 'btn-success'}`}
+                                    >
+                                        {showManualAdd ? 'Search Library' : '+ Add Custom Book'}
+                                    </button>
+                                )}
+                            </div>
                             {!showManualAdd && (
-                                <input
-                                    type="search"
-                                    value={searchValue}
-                                    className="input-box"
-                                    placeholder="Search Books"
-                                    onChange={this.updateSearchValue}
-                                    onKeyPress={this.triggerSearchOnEnter}
-                                />
+                                <div className="search-input-wrapper">
+                                    <input
+                                        type="search"
+                                        value={searchValue}
+                                        className="input-box"
+                                        placeholder={searchType === 'findBook' ? 'Search books by title, author...' : 'Search OpenLibrary to add book...'}
+                                        onChange={this.updateSearchValue}
+                                        onKeyPress={this.triggerSearchOnEnter}
+                                    />
+                                </div>
                             )}
                         </div>
 
                         {showManualAdd ? (
-                            <form onSubmit={this.handleManualBookSubmit} className="manual-book-form" style={{ marginTop: '20px', textAlign: 'center' }}>
-                                <h2 style={{ color: '#fff', marginBottom: '15px' }}>Add a New Book to MongoDB</h2>
-                                <input
-                                    type="text"
-                                    placeholder="Book Title"
-                                    value={customTitle}
-                                    onChange={(e) => this.setState({ customTitle: e.target.value })}
-                                    className="input-box"
-                                    style={{ display: 'block', margin: '10px auto', width: '280px' }}
-                                    required
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Author Name"
-                                    value={customAuthor}
-                                    onChange={(e) => this.setState({ customAuthor: e.target.value })}
-                                    className="input-box"
-                                    style={{ display: 'block', margin: '10px auto', width: '280px' }}
-                                    required
-                                />
-                                <button type="submit" className="btn" style={{ marginTop: '10px' }}>Save Book to Database</button>
+                            <form onSubmit={this.handleManualBookSubmit} className="manual-book-card">
+                                <h2 className="manual-form-title">Add a New Book to MongoDB</h2>
+                                <div className="manual-input-group">
+                                    <input
+                                        type="text"
+                                        placeholder="Book Title"
+                                        value={customTitle}
+                                        onChange={(e) => this.setState({ customTitle: e.target.value })}
+                                        className="input-box"
+                                        required
+                                    />
+                                </div>
+                                <div className="manual-input-group">
+                                    <input
+                                        type="text"
+                                        placeholder="Author Name"
+                                        value={customAuthor}
+                                        onChange={(e) => this.setState({ customAuthor: e.target.value })}
+                                        className="input-box"
+                                        required
+                                    />
+                                </div>
+                                <button type="submit" className="btn btn-save-book">Save Book to Database</button>
                             </form>
                         ) : (
                             <>
@@ -256,13 +263,13 @@ class OnlineBookExchange extends Component {
         let historyContainer;
         if (historySelector === 'requestedBooks') {
             historyContainer = requestedBooks.length === 0 ? (
-                <p style={{ color: '#fff', fontSize: '18px', marginTop: '20px' }}>No requested books yet.</p>
+                <p className="no-items-text">No requested books yet.</p>
             ) : (
                 requestedBooks.map((eachBook) => <HistoryItem key={eachBook.id} bookDetails={eachBook} removeBook={this.removeBook} />)
             );
         } else {
             historyContainer = yourBooksList.length === 0 ? (
-                <p style={{ color: '#fff', fontSize: '18px', marginTop: '20px' }}>You haven't added any books to the database yet.</p>
+                <p className="no-items-text">You haven't added any books to the database yet.</p>
             ) : (
                 yourBooksList.map((eachBook) => <HistoryItem key={eachBook.id} bookDetails={eachBook} removeBook={this.removeBook} />)
             );
@@ -270,7 +277,7 @@ class OnlineBookExchange extends Component {
 
         return (
             <div className="history-container">
-                <div className="l">
+                <div className="btn-container">
                     <button className={`history-btn left ${requestedBooksClass}`} onClick={this.changeHistoryType}>Requested Books</button>
                     <button className={`history-btn right ${yourBooksClass}`} onClick={this.changeHistoryType}>Your Books</button>
                 </div>
@@ -284,14 +291,37 @@ class OnlineBookExchange extends Component {
     renderAbout = () => {
         return (
             <div className="about-container">
-                <h1 className="about-header">ONLINE BOOK EXCHANGE</h1>
-                <p>A community platform where book lovers can lend and borrow books seamlessly.</p>
-                <br />
-                <p>For any help or feedback, please contact us:</p>
-                <br />
-                <p>Contact Number : +91 8885490454</p>
-                <br />
-                <p>Email id : 23b81a0518@cvr.ac.in</p>
+                <div className="about-card">
+                    <h1 className="about-header">Online Book Exchange</h1>
+                    <p className="about-tagline">A community platform where book lovers can lend and borrow books seamlessly.</p>
+                    
+                    <div className="about-features-grid">
+                        <div className="about-feature-box">
+                            <span className="feature-icon">📚</span>
+                            <h3>Share & Lend</h3>
+                            <p>List your favorite reads from your shelf to help other readers discover new stories.</p>
+                        </div>
+                        <div className="about-feature-box">
+                            <span className="feature-icon">🔍</span>
+                            <h3>Find & Borrow</h3>
+                            <p>Search community collections and request books directly from local book owners.</p>
+                        </div>
+                        <div className="about-feature-box">
+                            <span className="feature-icon">🤝</span>
+                            <h3>Connect</h3>
+                            <p>Build lasting bonds with fellow passionate readers across colleges and cities.</p>
+                        </div>
+                    </div>
+
+                    <div className="about-contact-card">
+                        <h3>Help & Support</h3>
+                        <p>We are always eager to hear your thoughts and feedback.</p>
+                        <div className="contact-links">
+                            <a href="tel:+918885490454" className="contact-pill">📞 +91 8885490454</a>
+                            <a href="mailto:23b81a0518@cvr.ac.in" className="contact-pill">✉️ 23b81a0518@cvr.ac.in</a>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     };
